@@ -36,7 +36,7 @@ Get-ChildItem "$PSScriptRoot\..\images" -Filter *.png | ForEach-Object {
             $after = (Get-Item $temp).Length
 
             if ($after -lt $before) {
-                Move-Item -LiteralPath $temp -Destination $file -Force
+                Move-Item -LiteralPath $temp -Destination $file -Force -ErrorAction SilentlyContinue
                 $results += [pscustomobject]@{
                     Name = $_.Name
                     BeforeKB = [Math]::Round($before / 1KB, 1)

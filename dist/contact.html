@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Support - Mama Meals</title>
+    <link rel="stylesheet" href="assets/css/style.min.css">
+</head>
+<body class="form-page">
+    <header class="checkout-header">
+        <a class="back-link" href="index.html" aria-label="Return to Mama Meals home page">Back</a>
+        <div>
+            <span class="location-kicker">Support</span>
+            <h1>Contact Mama Meals</h1>
+        </div>
+    </header>
+
+    <main class="application-layout compact-application">
+        <section class="application-intro checkout-panel">
+            <h2>Need help?</h2>
+            <p>Send a message to support or reach us directly on WhatsApp.</p>
+            <a class="whatsapp-inline" href="https://wa.me/254700000000">Chat on WhatsApp</a>
+        </section>
+
+        <form class="checkout-panel application-form">
+            <label class="field-label" for="contact-name">Full Name</label>
+            <input class="text-field" id="contact-name" type="text" required>
+
+            <label class="field-label" for="contact-phone">Phone Number</label>
+            <input class="text-field" id="contact-phone" type="tel" required>
+
+            <label class="field-label" for="contact-email">Email</label>
+            <input class="text-field" id="contact-email" type="email">
+
+            <label class="field-label" for="contact-topic">Topic</label>
+            <select class="text-field" id="contact-topic">
+                <option>Order support</option>
+                <option>Payment help</option>
+                <option>Rider application</option>
+                <option>Cook/vendor application</option>
+                <option>General question</option>
+            </select>
+
+            <label class="field-label" for="contact-message">Message</label>
+            <textarea class="text-field textarea-field" id="contact-message" required></textarea>
+
+            <button class="place-order-button" type="submit">Send Message</button>
+        </form>
+    </main>
+</body>
+</html>

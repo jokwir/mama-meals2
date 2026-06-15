@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join the Delivery Team - Mama Meals</title>
+    <link rel="stylesheet" href="assets/css/style.min.css">
+</head>
+<body class="form-page">
+    <header class="checkout-header">
+        <a class="back-link" href="index.html" aria-label="Return to Mama Meals home page">Back</a>
+        <div>
+            <span class="location-kicker">Rider application</span>
+            <h1>Join the Mama Meals Delivery Team</h1>
+        </div>
+    </header>
+
+    <main class="application-layout">
+        <section class="application-hero">
+            <img src="images/06_join_the_team_rider.png" alt="Mama Meals delivery rider">
+            <div class="application-hero-copy">
+                <h2>Deliver meals across Nairobi</h2>
+                <p>Share your details and our team will contact you about rider opportunities.</p>
+            </div>
+        </section>
+
+        <form class="checkout-panel application-form" data-application-form="rider">
+            <label class="field-label" for="rider-name">Full Name</label>
+            <input class="text-field" id="rider-name" type="text" required>
+
+            <label class="field-label" for="rider-phone">Phone Number</label>
+            <input class="text-field" id="rider-phone" type="tel" required>
+
+            <label class="field-label" for="rider-email">Email (optional)</label>
+            <input class="text-field" id="rider-email" type="email">
+
+            <label class="field-label" for="rider-location">Location</label>
+            <input class="text-field" id="rider-location" type="text" required>
+
+            <label class="field-label" for="vehicle-type">Vehicle type</label>
+            <select class="text-field" id="vehicle-type" required>
+                <option value="">Select vehicle type</option>
+                <option>Bicycle</option>
+                <option>Motorbike</option>
+                <option>Car</option>
+                <option>Walking delivery</option>
+            </select>
+
+            <label class="field-label" for="rider-experience">Experience</label>
+            <input class="text-field" id="rider-experience" type="text" placeholder="e.g. 2 years delivery experience">
+
+            <label class="field-label" for="rider-message">Message</label>
+            <textarea class="text-field textarea-field" id="rider-message" placeholder="Tell us about your availability"></textarea>
+
+            <button class="place-order-button" type="submit">Submit Rider Application</button>
+            <p class="application-success" data-application-success hidden>Thank you! We’ll review your details and send a verification email shortly.</p>
+        </form>
+    </main>
+    <script src="assets/js/app.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rider Dashboard - Mama Meals</title>
+    <link rel="stylesheet" href="assets/css/style.min.css">
+</head>
+<body class="account-page">
+    <header class="checkout-header">
+        <a class="back-link" href="account.html" aria-label="Return to my account">Back</a>
+        <div>
+            <span class="location-kicker">Delivery partner area</span>
+            <h1>My Rider Dashboard</h1>
+        </div>
+        <span data-auth-actions>
+            <a class="auth-link" href="register.html">Sign Up</a>
+            <a class="auth-link" href="login.html">Log In</a>
+        </span>
+        <a class="auth-welcome" href="account.html" data-auth-welcome hidden></a>
+    </header>
+
+    <main class="account-layout rider-dashboard" data-rider-dashboard>
+        <section class="checkout-empty visible" id="rider-denied">
+            <h2>Rider access required</h2>
+            <p>You need an approved rider application to view this dashboard.</p>
+            <a class="primary-link" href="account.html">Back to Account</a>
+        </section>
+
+        <section class="account-card profile-card rider-content" hidden>
+            <div class="account-card-heading">
+                <h2>Available Deliveries</h2>
+                <span class="status-badge status-delivery">Nearby</span>
+            </div>
+            <div class="rider-dashboard-list">
+                <article class="mini-list-item">
+                    <span>Pickup: Mama Sarah's Kitchen → Drop-off: Kilimani</span>
+                    <strong>KSh 120</strong>
+                </article>
+                <article class="mini-list-item">
+                    <span>Pickup: The Chapati Spot → Drop-off: Westlands</span>
+                    <strong>KSh 150</strong>
+                </article>
+            </div>
+        </section>
+
+        <section class="account-card rider-content" hidden>
+            <div class="account-card-heading">
+                <h2>My Active Trips</h2>
+                <button class="text-action" type="button" data-placeholder-alert="Trip updates will connect to live dispatch later.">Update Trip</button>
+            </div>
+            <div class="rider-dashboard-list">
+                <article class="mini-list-item">
+                    <span>No active trip assigned</span>
+                    <strong>Ready</strong>
+                </article>
+            </div>
+        </section>
+
+        <section class="account-card rider-content" hidden>
+            <h2>Delivery History</h2>
+            <div class="rider-dashboard-list">
+                <article class="mini-list-item">
+                    <span>Completed trips today</span>
+                    <strong>0</strong>
+                </article>
+                <article class="mini-list-item">
+                    <span>Average rating</span>
+                    <strong>Pending</strong>
+                </article>
+            </div>
+        </section>
+
+        <section class="account-card rider-content" hidden>
+            <h2>Earnings</h2>
+            <div class="order-breakdown">
+                <div><span>Today</span><strong>KSh 0</strong></div>
+                <div><span>This week</span><strong>KSh 0</strong></div>
+                <div><span>Pending payout</span><strong>KSh 0</strong></div>
+            </div>
+            <p class="support-copy">Placeholder for rider earnings, tips, bonuses, and payout history.</p>
+        </section>
+
+        <section class="account-card rider-content" hidden>
+            <div class="account-card-heading">
+                <h2>Profile Settings</h2>
+                <button class="text-action" type="button" data-placeholder-alert="Rider profile updates will save to the backend later.">Edit</button>
+            </div>
+            <label class="field-label" for="rider-dashboard-area">Service Area</label>
+            <input class="text-field" id="rider-dashboard-area" value="Nairobi">
+            <label class="field-label" for="rider-dashboard-vehicle">Vehicle</label>
+            <input class="text-field" id="rider-dashboard-vehicle" value="Motorbike">
+            <label class="settings-row">
+                <span>Available for deliveries</span>
+                <input type="checkbox" checked>
+            </label>
+        </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+        <a class="nav-item" href="index.html" aria-label="Home"><span class="nav-icon" aria-hidden="true">&#8962;</span></a>
+        <a class="nav-item" href="order-history.html" aria-label="Orders"><span class="nav-icon" aria-hidden="true">&#9636;</span></a>
+        <a class="nav-item active" href="account.html" aria-label="Account" aria-current="page"><span class="nav-icon" aria-hidden="true">&#9675;</span></a>
+    </nav>
+
+    <script src="assets/js/app.min.js"></script>
+</body>
+</html>

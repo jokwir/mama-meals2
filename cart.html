@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Cart - Mama Meals</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="checkout-page">
+    <header class="checkout-header">
+        <a class="back-link" href="index.html" aria-label="Return to Mama Meals home page">Back</a>
+        <div>
+            <span class="location-kicker">Mama Meals</span>
+            <h1>Your Cart</h1>
+        </div>
+        <span data-auth-actions>
+            <a class="auth-link" href="register.html">Sign Up</a>
+            <a class="auth-link" href="login.html">Log In</a>
+        </span>
+        <a class="auth-welcome" href="account.html" data-auth-welcome hidden></a>
+    </header>
+
+    <main class="checkout-layout">
+        <section class="checkout-panel" aria-labelledby="cart-heading">
+            <div class="section-heading checkout-title">
+                <h2 id="cart-heading">Order Summary</h2>
+                <span id="checkout-count">0 items</span>
+            </div>
+
+            <div class="cart-items" id="checkout-items"></div>
+
+            <div class="checkout-empty" id="checkout-empty">
+                <h2>Your cart is empty</h2>
+                <p>Add a meal from the home page to start your order.</p>
+                <a class="primary-link" href="index.html">Browse Meals</a>
+            </div>
+        </section>
+
+        <section class="checkout-panel checkout-form-panel" aria-labelledby="delivery-heading">
+            <h2 id="delivery-heading">Delivery Details</h2>
+
+            <label class="field-label" for="delivery-address">Delivery address</label>
+            <input class="text-field" id="delivery-address" type="text" placeholder="Example: House 45, Mumias Road, Lavington Estate — near Lavington Shopping Centre">
+            <p class="support-copy">Tip: Include house number, street, estate or landmark so the rider finds you easily</p>
+            <button class="text-action address-fill-button" id="use-test-address" type="button">Use test address</button>
+
+            <label class="field-label" for="special-instructions">Special instructions</label>
+            <textarea class="text-field textarea-field" id="special-instructions" placeholder="Any delivery notes or food requests?"></textarea>
+
+            <fieldset class="payment-options">
+                <legend>Payment option</legend>
+                <label class="payment-option selected">
+                    <input type="radio" name="payment-method" value="M-Pesa" checked>
+                    <span>
+                        <strong><span class="payment-icon payment-icon-mpesa" aria-hidden="true">M</span>M-Pesa</strong>
+                        <small>Recommended primary payment method</small>
+                    </span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment-method" value="Google Pay">
+                    <span>
+                        <strong><span class="payment-icon payment-icon-google" aria-hidden="true">G</span>Google Pay</strong>
+                        <small>Placeholder for Google Pay gateway</small>
+                    </span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment-method" value="Apple Pay">
+                    <span>
+                        <strong><span class="payment-icon payment-icon-apple" aria-hidden="true">A</span>Apple Pay</strong>
+                        <small>Placeholder for Apple Pay gateway</small>
+                    </span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment-method" value="Credit / Debit Card">
+                    <span>
+                        <strong><span class="payment-icon payment-icon-card" aria-hidden="true">CARD</span>Credit / Debit Card</strong>
+                        <small>Placeholder for card payments</small>
+                    </span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment-method" value="Cash on Delivery">
+                    <span>
+                        <strong><span class="payment-icon payment-icon-cash" aria-hidden="true">KSh</span>Cash on Delivery</strong>
+                        <small>Pay your rider on arrival</small>
+                    </span>
+                </label>
+            </fieldset>
+
+            <div class="daraja-placeholder">
+                <strong>M-Pesa Daraja API placeholder</strong>
+                <p>STK push integration will connect here when live payment credentials are added.</p>
+            </div>
+
+            <div class="totals-box">
+                <div><span>Subtotal</span><strong id="checkout-subtotal">KSh 0</strong></div>
+                <div><span>Delivery fee</span><strong id="checkout-delivery">KSh 30</strong></div>
+                <div class="total-row"><span>Total</span><strong id="checkout-total">KSh 0</strong></div>
+            </div>
+
+            <button class="place-order-button" id="place-order" type="button">Place Order</button>
+        </section>
+    </main>
+
+    <section class="confirmation-screen" id="confirmation-screen" aria-live="polite">
+        <div class="confirmation-card">
+            <div class="success-mark">OK</div>
+            <h2>Order Confirmed</h2>
+            <p id="confirmation-copy">✅ Order placed successfully! You can view it in your Order History</p>
+            <a class="primary-link" id="track-order-link" href="order-tracking.html">Track Order</a>
+            <a class="primary-link" href="index.html">Return Home</a>
+        </div>
+    </section>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+        <a class="nav-item" href="index.html" aria-label="Home"><span class="nav-icon" aria-hidden="true">&#8962;</span></a>
+        <a class="nav-item" href="order-history.html" aria-label="Orders"><span class="nav-icon" aria-hidden="true">&#9636;</span></a>
+        <a class="nav-item" href="account.html" aria-label="Account"><span class="nav-icon" aria-hidden="true">&#9675;</span></a>
+    </nav>
+
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

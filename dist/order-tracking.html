@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Order - Mama Meals</title>
+    <link rel="stylesheet" href="assets/css/style.min.css">
+</head>
+<body class="account-page">
+    <header class="checkout-header">
+        <a class="back-link" href="order-history.html" aria-label="Return to order history">Back</a>
+        <div>
+            <span class="location-kicker">Live order view</span>
+            <h1>Track Order</h1>
+        </div>
+        <span data-auth-actions>
+            <a class="auth-link" href="register.html">Sign Up</a>
+            <a class="auth-link" href="login.html">Log In</a>
+        </span>
+        <a class="auth-welcome" href="account.html" data-auth-welcome hidden></a>
+    </header>
+
+    <main class="tracking-layout" data-order-tracking>
+        <section class="checkout-empty visible" id="tracking-empty-state">
+            <h2>No active order to track yet</h2>
+            <p>Place an order first, then you will see the delivery progress here.</p>
+            <a class="primary-link" href="index.html">Browse Meals</a>
+        </section>
+
+        <section class="tracking-content" hidden>
+            <section class="account-card tracking-hero">
+                <div>
+                    <span class="location-kicker">Current order</span>
+                    <h2 id="tracking-order-id">Order pending</h2>
+                    <p class="support-copy" id="tracking-order-meta">Status updates will appear here.</p>
+                </div>
+                <div class="eta-box">
+                    <span>Estimated delivery</span>
+                    <strong id="tracking-eta">35-45 min</strong>
+                </div>
+            </section>
+
+            <section class="account-card">
+                <div class="account-card-heading">
+                    <h2>Order Status</h2>
+                    <span class="status-badge status-preparing" id="tracking-status">Confirmed</span>
+                </div>
+                <div class="tracking-steps" aria-label="Order status steps">
+                    <div class="tracking-step active" data-step="confirmed">
+                        <span></span>
+                        <strong>Confirmed</strong>
+                        <small>Your order has been received.</small>
+                    </div>
+                    <div class="tracking-step" data-step="preparing">
+                        <span></span>
+                        <strong>Preparing</strong>
+                        <small>The kitchen is preparing your meal.</small>
+                    </div>
+                    <div class="tracking-step" data-step="out">
+                        <span></span>
+                        <strong>Out for Delivery</strong>
+                        <small>Your rider is on the way.</small>
+                    </div>
+                    <div class="tracking-step" data-step="delivered">
+                        <span></span>
+                        <strong>Delivered</strong>
+                        <small>Meal delivered successfully.</small>
+                    </div>
+                </div>
+            </section>
+
+            <section class="account-card">
+                <div class="account-card-heading">
+                    <h2>Live Location</h2>
+                    <span>Map placeholder</span>
+                </div>
+                <div class="map-placeholder" aria-label="Live rider location map placeholder">
+                    <div class="map-pin"></div>
+                    <p>Live rider map will connect here later.</p>
+                </div>
+            </section>
+
+            <section class="tracking-grid">
+                <article class="account-card">
+                    <div class="account-card-heading">
+                        <h2>Rider Details</h2>
+                    </div>
+                    <div class="detail-list">
+                        <div><span>Name</span><strong id="tracking-rider-name">Assigned shortly</strong></div>
+                        <div><span>Phone</span><strong id="tracking-rider-phone">Pending</strong></div>
+                        <div><span>Vehicle</span><strong id="tracking-rider-vehicle">Motorbike</strong></div>
+                    </div>
+                </article>
+
+                <article class="account-card">
+                    <div class="account-card-heading">
+                        <h2>Vendor Details</h2>
+                    </div>
+                    <div class="detail-list">
+                        <div><span>Kitchen</span><strong id="tracking-vendor-name">Mama Meals Kitchen</strong></div>
+                        <div><span>Order total</span><strong id="tracking-total">KSh 0</strong></div>
+                        <div><span>Delivery address</span><strong id="tracking-address">Pending</strong></div>
+                    </div>
+                </article>
+            </section>
+        </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+        <a class="nav-item" href="index.html" aria-label="Home"><span class="nav-icon" aria-hidden="true">&#8962;</span></a>
+        <a class="nav-item active" href="order-history.html" aria-label="Orders" aria-current="page"><span class="nav-icon" aria-hidden="true">&#9636;</span></a>
+        <a class="nav-item" href="account.html" aria-label="Account"><span class="nav-icon" aria-hidden="true">&#9675;</span></a>
+    </nav>
+
+    <script src="assets/js/app.min.js"></script>
+</body>
+</html>

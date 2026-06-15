@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mama Meals - Kenyan Food Delivery</title>
+    <link rel="stylesheet" href="assets/css/style.min.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-topline">
+            <button class="location-selector" type="button" aria-label="Change delivery location">
+                <span class="location-kicker">Deliver to</span>
+                <span class="location-name">Nairobi, Kenya</span>
+                <span class="chevron">v</span>
+            </button>
+            <span data-auth-actions>
+                <a class="auth-link" href="register.html">Sign Up</a>
+                <a class="auth-link" href="login.html">Log In</a>
+            </span>
+            <a class="auth-welcome" href="account.html" data-auth-welcome hidden></a>
+        </div>
+
+        <label class="search-box" for="meal-search">
+            <span class="search-action" id="search-action" role="button" tabindex="0" aria-label="Search meals and vendors">Search</span>
+            <input id="meal-search" type="search" placeholder="Search meals, cooks, vendors..." autocomplete="off">
+            <span class="search-clear" id="search-clear" role="button" tabindex="0" aria-label="Clear search" hidden>×</span>
+        </label>
+
+        <section class="filter-rail" aria-label="Vendor filters">
+            <label class="filter-pill"><input type="checkbox" id="filter-pickup"><span>Pickup Only</span></label>
+            <label class="filter-pill"><input type="checkbox" id="filter-offers"><span>Offers & Deals</span></label>
+            <label class="filter-control"><span>Delivery Fee</span><input type="range" id="filter-fee" min="0" max="120" step="10" value="120"><small id="filter-fee-value">Up to KSh 120</small></label>
+            <label class="filter-control"><span>Delivery Time</span><input type="range" id="filter-time" min="20" max="60" step="5" value="60"><small id="filter-time-value">Up to 60 min</small></label>
+            <label class="filter-control select-filter"><span>Rating</span><select id="filter-rating"><option value="0">Any</option><option value="1">1+ stars</option><option value="2">2+ stars</option><option value="3">3+ stars</option><option value="4">4+ stars</option><option value="5">5 stars</option></select></label>
+            <label class="filter-control select-filter"><span>Price Range</span><select id="filter-price"><option value="9999">Any price</option><option value="250">Under KSh 250</option><option value="400">Under KSh 400</option><option value="600">Under KSh 600</option></select></label>
+            <label class="filter-control select-filter"><span>Sort By</span><select id="filter-sort"><option value="recommended">Recommended</option><option value="rating">Highest Rating</option><option value="fastest">Fastest Arrival Time</option></select></label>
+        </section>
+
+        <nav class="categories" aria-label="Meal categories">
+            <button class="category-chip active" type="button" data-category="All">All</button>
+            <button class="category-chip" type="button" data-category="Traditional">Traditional</button>
+            <button class="category-chip" type="button" data-category="Chapati">Chapati</button>
+            <button class="category-chip" type="button" data-category="Pilau">Pilau</button>
+            <button class="category-chip" type="button" data-category="Nyama Choma">Nyama Choma</button>
+            <button class="category-chip" type="button" data-category="Githeri">Githeri</button>
+            <button class="category-chip" type="button" data-category="Breakfast">Breakfast</button>
+            <button class="category-chip" type="button" data-category="Lunch">Lunch</button>
+            <button class="category-chip" type="button" data-category="Dinner">Dinner</button>
+        </nav>
+    </header>
+
+    <main>
+        <section class="promo-carousel" aria-label="Promotions" data-public-only>
+            <div class="promo-track" id="promo-track">
+                <article class="promo-slide">
+                    <img src="images/05_free_fast_delivery.png" alt="Free fast delivery">
+                    <div class="promo-copy">
+                        <p>Fresh from local kitchens</p>
+                        <h1>Authentic Kenyan Meals Delivered Fast</h1>
+                    </div>
+                </article>
+                <article class="promo-slide">
+                    <img src="images/06_join_the_team_rider.png" alt="Mama Meals delivery rider">
+                    <div class="promo-copy">
+                        <p>Flexible hours across Nairobi</p>
+                        <h1>Join Our Delivery Team</h1>
+                    </div>
+                </article>
+            </div>
+            <div class="promo-dots" aria-hidden="true">
+                <span class="promo-dot active"></span>
+                <span class="promo-dot"></span>
+            </div>
+        </section>
+
+        <section class="vendors-section" aria-labelledby="featured-heading">
+            <div class="section-heading">
+                <h2 id="featured-heading">Featured Vendors</h2>
+                <span id="result-count">4 nearby</span>
+            </div>
+
+            <div class="vendor-list" id="vendor-list">
+                <article class="vendor-card" data-vendor-id="bibis" data-name="Bibi's Traditional Meals" data-keywords="traditional githeri mukimo lunch dinner" data-pickup="true" data-offers="true" data-fee="40" data-time="45" data-rating="4.8" data-price="350" role="link" tabindex="0" aria-label="Open Bibi's Traditional Meals shop">
+                    <img src="images/01_bibis_traditional_meals.png" alt="Bibi's Traditional Meals">
+                    <div class="vendor-details">
+                        <h3>Bibi's Traditional Meals</h3>
+                        <p>Traditional Githeri and Mukimo</p>
+                        <div class="vendor-meta">
+                            <span>30-45 min</span>
+                            <span>KSh 350</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="vendor-card" data-vendor-id="chapati" data-name="The Chapati Spot" data-keywords="chapati stew breakfast lunch dinner" data-pickup="true" data-offers="false" data-fee="30" data-time="30" data-rating="4.5" data-price="200" role="link" tabindex="0" aria-label="Open The Chapati Spot shop">
+                    <img src="images/02_chapati_spot.png" alt="The Chapati Spot">
+                    <div class="vendor-details">
+                        <h3>The Chapati Spot</h3>
+                        <p>Soft layered chapatis with stew</p>
+                        <div class="vendor-meta">
+                            <span>20-30 min</span>
+                            <span>KSh 200</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="vendor-card" data-vendor-id="mama-sarah" data-name="Mama Sarah's Kitchen" data-keywords="pilau nyama choma grill lunch dinner" data-pickup="false" data-offers="true" data-fee="70" data-time="50" data-rating="4.9" data-price="450" role="link" tabindex="0" aria-label="Open Mama Sarah's Kitchen shop">
+                    <img src="images/03_mama_sarahs_kitchen.png" alt="Mama Sarah's Kitchen">
+                    <div class="vendor-details">
+                        <h3>Mama Sarah's Kitchen</h3>
+                        <p>Authentic Pilau and Nyama Choma</p>
+                        <div class="vendor-meta">
+                            <span>40-50 min</span>
+                            <span>KSh 450</span>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="vendor-card" data-vendor-id="nairobi" data-name="Nairobi Delights" data-keywords="ugali sukuma fish lunch dinner" data-pickup="false" data-offers="false" data-fee="50" data-time="35" data-rating="4.6" data-price="380" role="link" tabindex="0" aria-label="Open Nairobi Delights shop">
+                    <img src="images/04_nairobi_delights.png" alt="Nairobi Delights">
+                    <div class="vendor-details">
+                        <h3>Nairobi Delights</h3>
+                        <p>Ugali, Sukuma and fresh Fish</p>
+                        <div class="vendor-meta">
+                            <span>25-35 min</span>
+                            <span>KSh 380</span>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <p class="empty-state" id="empty-state">No results found</p>
+
+        </section>
+    </main>
+
+    <a class="whatsapp-button" href="https://wa.me/447821238093" aria-label="Contact Mama Meals on WhatsApp">WhatsApp</a>
+
+    <button class="cart-bar" id="cart-bar" type="button" aria-live="polite" aria-label="Open cart and checkout">
+        <span><strong id="cart-count">0 items</strong><small id="cart-latest">Ready when you are</small></span>
+        <span id="cart-total">KSh 0</span>
+    </button>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+        <a class="nav-item active" href="index.html" aria-label="Home" aria-current="page"><span class="nav-icon" aria-hidden="true">&#8962;</span></a>
+        <a class="nav-item" href="order-history.html" aria-label="Orders"><span class="nav-icon" aria-hidden="true">&#9636;</span></a>
+        <a class="nav-item" href="account.html" aria-label="Account"><span class="nav-icon" aria-hidden="true">&#9675;</span></a>
+    </nav>
+
+    <script src="assets/js/app.min.js"></script>
+</body>
+</html>

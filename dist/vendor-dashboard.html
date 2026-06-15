@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendor Dashboard - Mama Meals</title>
+    <link rel="stylesheet" href="assets/css/style.min.css">
+</head>
+<body class="account-page">
+    <header class="checkout-header">
+        <a class="back-link" href="account.html" aria-label="Return to my account">Back</a>
+        <div>
+            <span class="location-kicker">Cook partner area</span>
+            <h1>My Vendor Dashboard</h1>
+        </div>
+        <span data-auth-actions>
+            <a class="auth-link" href="register.html">Sign Up</a>
+            <a class="auth-link" href="login.html">Log In</a>
+        </span>
+        <a class="auth-welcome" href="account.html" data-auth-welcome hidden></a>
+    </header>
+
+    <main class="account-layout vendor-dashboard" data-vendor-dashboard>
+        <section class="checkout-empty visible" id="vendor-denied">
+            <h2>Vendor access required</h2>
+            <p>You need an approved cook/vendor application to view this dashboard.</p>
+            <a class="primary-link" href="account.html">Back to Account</a>
+        </section>
+
+        <section class="account-card profile-card vendor-content" hidden>
+            <div class="account-card-heading">
+                <h2>My Menu</h2>
+                <button class="text-action" type="button" data-placeholder-alert="Menu item creation will connect to the vendor database later.">Add Item</button>
+            </div>
+            <div class="vendor-dashboard-list">
+                <article class="mini-list-item">
+                    <span>Pilau Plate - KSh 450</span>
+                    <div>
+                        <button type="button" data-placeholder-alert="Edit item will connect later.">Edit</button>
+                        <button type="button" data-placeholder-alert="Remove item will connect later.">Remove</button>
+                    </div>
+                </article>
+                <article class="mini-list-item">
+                    <span>Fresh Juice - KSh 150</span>
+                    <div>
+                        <button type="button" data-placeholder-alert="Edit item will connect later.">Edit</button>
+                        <button type="button" data-placeholder-alert="Remove item will connect later.">Remove</button>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section class="account-card vendor-content" hidden>
+            <div class="account-card-heading">
+                <h2>My Orders</h2>
+                <span class="status-badge status-preparing">Placeholder</span>
+            </div>
+            <div class="vendor-dashboard-list">
+                <article class="mini-list-item">
+                    <span>Incoming order queue</span>
+                    <strong>Ready later</strong>
+                </article>
+                <article class="mini-list-item">
+                    <span>Order history</span>
+                    <strong>Ready later</strong>
+                </article>
+            </div>
+        </section>
+
+        <section class="account-card vendor-content" hidden>
+            <h2>Earnings Summary</h2>
+            <div class="order-breakdown">
+                <div><span>Today</span><strong>KSh 0</strong></div>
+                <div><span>This week</span><strong>KSh 0</strong></div>
+                <div><span>Pending payout</span><strong>KSh 0</strong></div>
+            </div>
+            <p class="support-copy">Placeholder for sales, payouts, commissions, and reports.</p>
+        </section>
+
+        <section class="account-card vendor-content" hidden>
+            <div class="account-card-heading">
+                <h2>Profile Settings</h2>
+                <button class="text-action" type="button" data-placeholder-alert="Vendor profile updates will save to the backend later.">Edit</button>
+            </div>
+            <label class="field-label" for="vendor-display-name">Kitchen Name</label>
+            <input class="text-field" id="vendor-display-name" value="My Mama Meals Kitchen">
+            <label class="field-label" for="vendor-service-area">Service Area</label>
+            <input class="text-field" id="vendor-service-area" value="Nairobi">
+            <label class="settings-row">
+                <span>Accepting orders</span>
+                <input type="checkbox" checked>
+            </label>
+        </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+        <a class="nav-item" href="index.html" aria-label="Home"><span class="nav-icon" aria-hidden="true">&#8962;</span></a>
+        <a class="nav-item" href="order-history.html" aria-label="Orders"><span class="nav-icon" aria-hidden="true">&#9636;</span></a>
+        <a class="nav-item active" href="account.html" aria-label="Account" aria-current="page"><span class="nav-icon" aria-hidden="true">&#9675;</span></a>
+    </nav>
+
+    <script src="assets/js/app.min.js"></script>
+</body>
+</html>

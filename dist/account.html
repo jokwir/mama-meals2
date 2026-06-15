@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Account - Mama Meals</title>
+    <link rel="stylesheet" href="assets/css/style.min.css">
+</head>
+<body class="account-page">
+    <header class="checkout-header">
+        <a class="back-link" href="index.html" aria-label="Return to Mama Meals home page">Back</a>
+        <div>
+            <span class="location-kicker">Customer dashboard</span>
+            <h1>My Account</h1>
+        </div>
+    </header>
+
+    <main class="account-layout">
+        <section class="checkout-empty visible" id="account-signed-out">
+            <h2>You are not signed in</h2>
+            <a class="primary-link" href="register.html">Create Account</a>
+            <a class="secondary-link" href="login.html">Log In</a>
+        </section>
+
+        <section class="account-card profile-card account-content" hidden>
+            <div class="account-card-heading">
+                <h2>Profile Information</h2>
+                <button class="text-action" type="button" data-placeholder-alert="Profile editing will save to the customer database later.">Edit</button>
+            </div>
+            <div class="profile-grid">
+                <label class="field-label" for="profile-name">Name</label>
+                <input class="text-field" id="profile-name" data-profile-field="fullName">
+
+                <label class="field-label" for="profile-phone">Phone</label>
+                <input class="text-field" id="profile-phone" data-profile-field="phone">
+
+                <label class="field-label" for="profile-email">Email</label>
+                <input class="text-field" id="profile-email" data-profile-field="email">
+
+                <label class="field-label" for="profile-location">Location</label>
+                <input class="text-field" id="profile-location" data-profile-field="location">
+            </div>
+            <div class="verification-row">
+                <p class="support-copy" id="email-verification-status"></p>
+                <button class="text-action" type="button" id="verify-email-button" hidden>Mark Email Verified</button>
+            </div>
+        </section>
+
+        <section class="account-card account-content" hidden>
+            <div class="account-card-heading">
+                <h2>Saved Delivery Addresses</h2>
+                <button class="text-action" type="button" id="add-address">Add New</button>
+            </div>
+            <div class="address-list" id="address-list"></div>
+        </section>
+
+        <section class="account-card account-content" hidden>
+            <div class="account-card-heading">
+                <h2>Payment Methods</h2>
+                <button class="text-action" type="button" data-placeholder-alert="Payment method setup will be connected to secure gateways later.">Add new payment method</button>
+            </div>
+            <div class="mini-list-item payment-method-item primary-payment">
+                <span><span class="payment-icon" aria-hidden="true">MP</span>A: M-Pesa</span>
+                <strong>Default</strong>
+            </div>
+            <div class="mini-list-item payment-method-item">
+                <span><span class="payment-icon" aria-hidden="true">G</span>B: Google Pay</span>
+                <strong>Available</strong>
+            </div>
+            <div class="mini-list-item payment-method-item">
+                <span><span class="payment-icon" aria-hidden="true">AP</span>C: Apple Pay</span>
+                <strong>Available</strong>
+            </div>
+            <div class="mini-list-item payment-method-item">
+                <span><span class="payment-icon" aria-hidden="true">CD</span>D: Credit / Debit Card</span>
+                <strong>Available</strong>
+            </div>
+            <div class="mini-list-item payment-method-item">
+                <span><span class="payment-icon" aria-hidden="true">CA</span>E: Cash on Delivery</span>
+                <strong>Available</strong>
+            </div>
+        </section>
+
+        <section class="account-card account-content" hidden>
+            <div class="account-card-heading">
+                <h2>My Favorites</h2>
+            </div>
+            <div class="favorites-grid">
+                <article>
+                    <img src="images/03_mama_sarahs_kitchen.png" alt="Mama Sarah's Kitchen">
+                    <span>Mama Sarah's Kitchen</span>
+                </article>
+                <article>
+                    <img src="images/02_chapati_spot.png" alt="The Chapati Spot">
+                    <span>The Chapati Spot</span>
+                </article>
+            </div>
+        </section>
+
+        <section class="account-card action-card account-content" hidden>
+            <a class="account-row-link" href="order-history.html">Order History</a>
+            <a class="account-row-link" href="order-tracking.html">Track Current Order</a>
+        </section>
+
+        <section class="account-card action-card account-content" id="admin-account-link" hidden>
+            <a class="account-row-link" href="admin-dashboard.html">Admin Dashboard</a>
+        </section>
+
+        <section class="account-card account-content" hidden>
+            <div class="account-card-heading">
+                <h2>Join Our Team</h2>
+            </div>
+            <div class="dashboard-links" id="partner-dashboard-links"></div>
+            <div class="get-started-grid account-team-grid">
+                <a class="get-started-button partner-button" href="apply-cook.html">
+                    <span aria-hidden="true">🧑‍🍳</span>
+                    <strong>Become a Cook</strong>
+                </a>
+                <a class="get-started-button partner-button" href="apply-rider.html">
+                    <span aria-hidden="true">🚴</span>
+                    <strong>Join as a Rider</strong>
+                </a>
+            </div>
+        </section>
+
+        <section class="account-card account-content" hidden>
+            <div class="account-card-heading">
+                <h2>Settings</h2>
+            </div>
+            <label class="settings-row">
+                <span>Notifications</span>
+                <input type="checkbox" checked>
+            </label>
+            <label class="field-label" for="language-preference">Language preference</label>
+            <select class="text-field" id="language-preference">
+                <option>English</option>
+                <option>Kiswahili</option>
+            </select>
+        </section>
+
+        <section class="account-card account-content" hidden>
+            <div class="account-card-heading">
+                <h2>Help & Support</h2>
+            </div>
+            <p class="support-copy">Need help with an order, payment, rider, or vendor question?</p>
+            <a class="whatsapp-inline" href="https://wa.me/254700000000">Chat on WhatsApp</a>
+            <a class="secondary-link" href="contact.html">Open Support Form</a>
+        </section>
+
+        <button class="logout-button account-content" type="button" id="logout-button" hidden>Logout</button>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+        <a class="nav-item" href="index.html" aria-label="Home"><span class="nav-icon" aria-hidden="true">&#8962;</span></a>
+        <a class="nav-item" href="order-history.html" aria-label="Orders"><span class="nav-icon" aria-hidden="true">&#9636;</span></a>
+        <a class="nav-item active" href="account.html" aria-label="Account" aria-current="page"><span class="nav-icon" aria-hidden="true">&#9675;</span></a>
+    </nav>
+
+    <script src="assets/js/app.min.js"></script>
+</body>
+</html>

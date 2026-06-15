@@ -1,0 +1,110 @@
+{
+  "users": {
+    "documentId": "auth.uid",
+    "fields": {
+      "fullName": "string",
+      "phone": "string",
+      "email": "string",
+      "location": "string",
+      "role": "customer | vendor | rider | admin",
+      "createdAt": "timestamp",
+      "updatedAt": "timestamp"
+    }
+  },
+  "vendors": {
+    "documentId": "vendorId",
+    "fields": {
+      "ownerId": "auth.uid",
+      "businessName": "string",
+      "location": "string",
+      "foodTypes": "array<string>",
+      "status": "pending | approved | rejected | suspended",
+      "imageUrl": "string",
+      "createdAt": "timestamp"
+    }
+  },
+  "riders": {
+    "documentId": "riderId",
+    "fields": {
+      "userId": "auth.uid",
+      "fullName": "string",
+      "phone": "string",
+      "vehicleType": "string",
+      "serviceArea": "string",
+      "status": "pending | approved | rejected | suspended",
+      "createdAt": "timestamp"
+    }
+  },
+  "orders": {
+    "documentId": "orderId",
+    "fields": {
+      "userId": "auth.uid",
+      "vendorId": "string",
+      "vendorOwnerId": "auth.uid",
+      "riderUserId": "auth.uid | null",
+      "items": "array<object>",
+      "subtotal": "number",
+      "deliveryFee": "number",
+      "total": "number",
+      "deliveryAddress": "string",
+      "paymentMethod": "string",
+      "status": "received | preparing | out_for_delivery | delivered | cancelled",
+      "createdAt": "timestamp",
+      "updatedAt": "timestamp"
+    }
+  },
+  "menuItems": {
+    "documentId": "menuItemId",
+    "fields": {
+      "vendorId": "string",
+      "vendorOwnerId": "auth.uid",
+      "name": "string",
+      "description": "string",
+      "category": "Main Meals | Sides | Drinks | Snacks",
+      "price": "number",
+      "imageUrl": "string",
+      "isAvailable": "boolean",
+      "createdAt": "timestamp",
+      "updatedAt": "timestamp"
+    }
+  },
+  "vendorApplications": {
+    "documentId": "applicationId",
+    "fields": {
+      "userId": "auth.uid",
+      "businessName": "string",
+      "phone": "string",
+      "email": "string",
+      "location": "string",
+      "foodType": "string",
+      "experience": "string",
+      "status": "pending | approved | rejected",
+      "submittedAt": "timestamp",
+      "reviewedAt": "timestamp | null"
+    }
+  },
+  "riderApplications": {
+    "documentId": "applicationId",
+    "fields": {
+      "userId": "auth.uid",
+      "fullName": "string",
+      "phone": "string",
+      "email": "string",
+      "location": "string",
+      "vehicleType": "string",
+      "experience": "string",
+      "status": "pending | approved | rejected",
+      "submittedAt": "timestamp",
+      "reviewedAt": "timestamp | null"
+    }
+  },
+  "adminSettings": {
+    "documentId": "settingId",
+    "fields": {
+      "deliveryFee": "number",
+      "serviceAreas": "array<string>",
+      "paymentGateways": "object",
+      "updatedAt": "timestamp"
+    }
+  }
+}

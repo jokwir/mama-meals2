@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Become a Kitchen Partner - Mama Meals</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="form-page">
+    <header class="checkout-header">
+        <a class="back-link" href="index.html" aria-label="Return to Mama Meals home page">Back</a>
+        <div>
+            <span class="location-kicker">Cook and vendor application</span>
+            <h1>Become a Local Kitchen Partner</h1>
+        </div>
+    </header>
+
+    <main class="application-layout compact-application">
+        <section class="application-intro checkout-panel">
+            <h2>Bring your kitchen to more customers</h2>
+            <p>Mama Meals partners with trusted local cooks and vendors serving fresh Kenyan meals.</p>
+        </section>
+
+        <form class="checkout-panel application-form" data-application-form="cook">
+            <label class="field-label" for="cook-name">Full Name/Business Name</label>
+            <input class="text-field" id="cook-name" type="text" required>
+
+            <label class="field-label" for="cook-phone">Phone</label>
+            <input class="text-field" id="cook-phone" type="tel" required>
+
+            <label class="field-label" for="cook-email">Email</label>
+            <input class="text-field" id="cook-email" type="email">
+
+            <label class="field-label" for="cook-location">Location</label>
+            <input class="text-field" id="cook-location" type="text" required>
+
+            <label class="field-label" for="food-type">Type of food</label>
+            <input class="text-field" id="food-type" type="text" placeholder="e.g. Pilau, Chapati, Githeri" required>
+
+            <label class="field-label" for="cook-experience">Experience</label>
+            <textarea class="text-field textarea-field" id="cook-experience" placeholder="Tell us about your cooking or food business experience"></textarea>
+
+            <div class="upload-note">
+                <strong>ID upload note</strong>
+                <p>ID and food-safety documents will be collected during verification.</p>
+            </div>
+
+            <button class="place-order-button" type="submit">Submit Kitchen Application</button>
+            <p class="application-success" data-application-success hidden>Thank you! We’ll review your details and send a verification email shortly.</p>
+        </form>
+    </main>
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

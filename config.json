@@ -1,0 +1,76 @@
+{
+  "app": {
+    "name": "Mama Meals",
+    "tagline": "Authentic Kenyan meals delivered fast",
+    "defaultLocation": "Nairobi, Kenya",
+    "currency": "KSh"
+  },
+  "brand": {
+    "primaryColor": "#FF6B35",
+    "secondaryColor": "#4CAF50",
+    "backgroundColor": "#f8f9fa",
+    "surfaceColor": "#ffffff",
+    "textColor": "#172018",
+    "mutedTextColor": "#68726b"
+  },
+  "pricing": {
+    "deliveryFee": 30,
+    "defaultVendorPrices": {
+      "Bibi's Traditional Meals": 350,
+      "The Chapati Spot": 200,
+      "Mama Sarah's Kitchen": 450,
+      "Nairobi Delights": 380
+    }
+  },
+  "contact": {
+    "supportPhone": "+447821238093",
+    "whatsappUrl": "https://wa.me/447821238093",
+    "supportEmail": "support@mamameals.example",
+    "serviceArea": "Nairobi, Kenya"
+  },
+  "images": {
+    "bibisTraditionalMeals": "images/01_bibis_traditional_meals.png",
+    "chapatiSpot": "images/02_chapati_spot.png",
+    "mamaSarahsKitchen": "images/03_mama_sarahs_kitchen.png",
+    "nairobiDelights": "images/04_nairobi_delights.png",
+    "freeFastDelivery": "images/05_free_fast_delivery.png",
+    "joinTeamRider": "images/06_join_the_team_rider.png"
+  },
+  "apiPlaceholders": {
+    "mpesaDaraja": {
+      "enabled": false,
+      "environment": "sandbox",
+      "baseUrl": "",
+      "consumerKey": "",
+      "consumerSecret": "",
+      "businessShortCode": "",
+      "passkey": "",
+      "callbackUrl": ""
+    },
+    "forms": {
+      "riderApplicationEndpoint": "",
+      "cookApplicationEndpoint": "",
+      "contactSupportEndpoint": ""
+    },
+    "orders": {
+      "createOrderEndpoint": "",
+      "orderStatusEndpoint": ""
+    }
+  },
+  "futureFlutterMapping": {
+    "themeSource": "brand",
+    "cartModelFields": [
+      "name",
+      "price",
+      "image",
+      "quantity"
+    ],
+    "screens": {
+      "home": "index.html",
+      "cartCheckout": "cart.html",
+      "riderApplication": "apply-rider.html",
+      "cookApplication": "apply-cook.html",
+      "support": "contact.html"
+    }
+  }
+}

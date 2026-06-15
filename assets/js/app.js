@@ -1,0 +1,1468 @@
+const deliveryFee = 30;
+const cartStorageKey = "mamaMealsCart";
+const accountStorageKey = "mamaMealsActiveAccount";
+const accountProfileStorageKey = "mamaMealsAccountProfile";
+const usersStorageKey = "mamaMealsUsers";
+const orderStorageKey = "mamaMealsOrders";
+const partnerApplicationsStorageKey = "mamaMealsPartnerApplications";
+const passwordResetStorageKey = "mamaMealsPasswordResetRequests";
+
+const vendorShops = {
+    "bibis": {
+        name: "Bibi's Traditional Meals",
+        image: "images/01_bibis_traditional_meals.png",
+        description: "Traditional Githeri and Mukimo prepared with homestyle Kenyan flavor.",
+        meta: "30-45 min",
+        categories: {
+            "Main Meals": [
+                { name: "Mukimo Plate", description: "Mashed potatoes, maize, greens and tender vegetables.", price: 350 },
+                { name: "Githeri Bowl", description: "Slow-cooked maize and beans with rich seasoning.", price: 320 },
+                { name: "Beef Stew Meal", description: "Beef stew served with greens and your choice of starch.", price: 420 }
+            ],
+            "Sides": [
+                { name: "Sukuma Wiki", description: "Fresh sauteed greens with onion and tomato.", price: 120 },
+                { name: "Kachumbari", description: "Tomato, onion and coriander salad.", price: 90 }
+            ],
+            "Drinks": [
+                { name: "Fresh Passion Juice", description: "Chilled passion fruit juice.", price: 150 },
+                { name: "Bottled Water", description: "Still bottled water.", price: 80 }
+            ],
+            "Snacks": [
+                { name: "Mandazi", description: "Soft Kenyan fried dough snack.", price: 70 },
+                { name: "Roasted Groundnuts", description: "Lightly salted roasted groundnuts.", price: 100 }
+            ]
+        }
+    },
+    "chapati": {
+        name: "The Chapati Spot",
+        image: "images/02_chapati_spot.png",
+        description: "Soft layered chapatis with hearty stews and quick bites.",
+        meta: "20-30 min",
+        categories: {
+            "Main Meals": [
+                { name: "Chapati and Beans", description: "Two soft chapatis with stewed beans.", price: 200 },
+                { name: "Chapati and Beef Stew", description: "Layered chapati with rich beef stew.", price: 380 },
+                { name: "Chapati Wrap", description: "Chapati wrapped with eggs, vegetables and sauce.", price: 260 }
+            ],
+            "Sides": [
+                { name: "Extra Chapati", description: "One freshly cooked layered chapati.", price: 70 },
+                { name: "Bean Stew Side", description: "Small bowl of stewed beans.", price: 120 }
+            ],
+            "Drinks": [
+                { name: "Tangawizi Soda", description: "Cold ginger soda.", price: 120 },
+                { name: "Mango Juice", description: "Sweet chilled mango juice.", price: 150 }
+            ],
+            "Snacks": [
+                { name: "Samosa", description: "Crisp pastry filled with spiced minced beef.", price: 90 },
+                { name: "Chapati Roll Bite", description: "Mini chapati roll with vegetable filling.", price: 110 }
+            ]
+        }
+    },
+    "mama-sarah": {
+        name: "Mama Sarah's Kitchen",
+        image: "images/03_mama_sarahs_kitchen.png",
+        description: "Authentic Pilau and Nyama Choma made with love.",
+        meta: "40-50 min",
+        categories: {
+            "Main Meals": [
+                { name: "Chicken Pilau", description: "Spiced rice with tender chicken pieces.", price: 450 },
+                { name: "Nyama Choma Plate", description: "Chargrilled beef served with kachumbari.", price: 650 },
+                { name: "Pilau and Kachumbari", description: "Fragrant pilau rice with fresh salad.", price: 380 }
+            ],
+            "Sides": [
+                { name: "Ugali Side", description: "Classic maize meal accompaniment.", price: 100 },
+                { name: "Kachumbari Side", description: "Fresh tomato and onion salad.", price: 90 }
+            ],
+            "Drinks": [
+                { name: "Fresh Tamarind Juice", description: "Chilled ukwaju juice.", price: 160 },
+                { name: "Bottled Water", description: "Still bottled water.", price: 80 }
+            ],
+            "Snacks": [
+                { name: "Beef Samosa", description: "Crispy samosa with spiced beef filling.", price: 90 },
+                { name: "Grilled Maize", description: "Chargrilled maize with lemon and chili.", price: 120 }
+            ]
+        }
+    },
+    "nairobi": {
+        name: "Nairobi Delights",
+        image: "images/04_nairobi_delights.png",
+        description: "Ugali, Sukuma and fresh Fish served local-style.",
+        meta: "25-35 min",
+        categories: {
+            "Main Meals": [
+                { name: "Fish and Ugali", description: "Fresh fish served with ugali and greens.", price: 380 },
+                { name: "Ugali Sukuma Plate", description: "Classic ugali with sauteed sukuma wiki.", price: 240 },
+                { name: "Tilapia Stew", description: "Tilapia cooked in tomato stew with herbs.", price: 520 }
+            ],
+            "Sides": [
+                { name: "Extra Ugali", description: "Extra serving of ugali.", price: 80 },
+                { name: "Sukuma Side", description: "Sauteed greens with tomato.", price: 120 }
+            ],
+            "Drinks": [
+                { name: "Sugarcane Juice", description: "Fresh pressed sugarcane juice.", price: 160 },
+                { name: "Lemonade", description: "Chilled house lemonade.", price: 140 }
+            ],
+            "Snacks": [
+                { name: "Bhajia", description: "Crispy potato slices with spices.", price: 180 },
+                { name: "Roasted Cassava", description: "Cassava snack with chili and lemon.", price: 130 }
+            ]
+        }
+    }
+};
+
+function formatShillings(value) {
+    return `KSh ${value.toLocaleString("en-KE")}`;
+}
+
+function getCart() {
+    try {
+        return JSON.parse(localStorage.getItem(cartStorageKey)) || [];
+    } catch {
+        return [];
+    }
+}
+
+function saveCart(items) {
+    localStorage.setItem(cartStorageKey, JSON.stringify(items));
+}
+
+function hasActiveAccount() {
+    return localStorage.getItem(accountStorageKey) === "true" && Boolean(getAccountProfile());
+}
+
+function setActiveAccount() {
+    localStorage.setItem(accountStorageKey, "true");
+}
+
+function clearActiveAccount() {
+    localStorage.removeItem(accountStorageKey);
+    localStorage.removeItem(accountProfileStorageKey);
+}
+
+function getAccountProfile() {
+    try {
+        return JSON.parse(localStorage.getItem(accountProfileStorageKey)) || null;
+    } catch {
+        return null;
+    }
+}
+
+function saveAccountProfile(profile) {
+    localStorage.setItem(accountProfileStorageKey, JSON.stringify(profile));
+}
+
+function getUsers() {
+    try {
+        return JSON.parse(localStorage.getItem(usersStorageKey)) || [];
+    } catch {
+        return [];
+    }
+}
+
+function saveUsers(users) {
+    localStorage.setItem(usersStorageKey, JSON.stringify(users));
+}
+
+function getPasswordResetRequests() {
+    try {
+        return JSON.parse(localStorage.getItem(passwordResetStorageKey)) || [];
+    } catch {
+        return [];
+    }
+}
+
+function savePasswordResetRequests(requests) {
+    localStorage.setItem(passwordResetStorageKey, JSON.stringify(requests));
+}
+
+function normalizeEmail(email) {
+    return (email || "").trim().toLowerCase();
+}
+
+function buildUserId(profile) {
+    return (profile.email || profile.phone || profile.fullName || `user-${Date.now()}`).toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
+
+function isAdminProfile(profile) {
+    if (!profile) {
+        return false;
+    }
+
+    const adminEmails = ["admin@mamameals.local", "admin@mamameals.com"];
+    return userHasRole(profile, "admin") || adminEmails.includes((profile.email || "").toLowerCase());
+}
+
+function userHasRole(profile, role) {
+    if (!profile) {
+        return false;
+    }
+
+    const roles = profile.roles || [profile.role || "customer"];
+    return roles.includes(role);
+}
+
+function findUserByLogin(loginId) {
+    const normalizedLogin = normalizeEmail(loginId);
+    const cleanPhone = (loginId || "").replace(/\s+/g, "");
+
+    return getUsers().find((user) => (
+        normalizeEmail(user.email) === normalizedLogin ||
+        (user.phone || "").replace(/\s+/g, "") === cleanPhone
+    ));
+}
+
+function createUserRecord(profile, password, roles = ["customer"], options = {}) {
+    const normalizedEmail = normalizeEmail(profile.email);
+    const userId = buildUserId({ ...profile, email: normalizedEmail });
+
+    return {
+        userId,
+        fullName: profile.fullName,
+        phone: profile.phone,
+        email: normalizedEmail,
+        location: profile.location,
+        addresses: profile.addresses || [profile.location].filter(Boolean),
+        password,
+        roles,
+        role: roles[0] || "customer",
+        emailVerified: Boolean(options.emailVerified),
+        verificationEmailSentAt: options.emailVerified ? null : new Date().toISOString(),
+        createdAt: new Date().toISOString()
+    };
+}
+
+function toPublicProfile(user) {
+    if (!user) {
+        return null;
+    }
+
+    const { password, ...profile } = user;
+    return profile;
+}
+
+function saveActiveUser(user) {
+    saveAccountProfile(toPublicProfile(user));
+    setActiveAccount();
+}
+
+function updateStoredUser(userId, updater) {
+    const users = getUsers();
+    const index = users.findIndex((user) => user.userId === userId);
+
+    if (index === -1) {
+        return null;
+    }
+
+    const updatedUser = { ...users[index], ...updater(users[index]) };
+    users[index] = updatedUser;
+    saveUsers(users);
+
+    const activeProfile = getAccountProfile();
+    if (activeProfile?.userId === userId) {
+        saveAccountProfile(toPublicProfile(updatedUser));
+    }
+
+    return updatedUser;
+}
+
+function grantUserRole(role) {
+    const profile = getActiveProfile();
+    if (!profile) {
+        return;
+    }
+
+    updateStoredUser(profile.userId, (user) => {
+        const roles = Array.from(new Set([...(user.roles || [user.role || "customer"]), role]));
+        return { roles, role: roles[0] || "customer" };
+    });
+}
+
+function getOrders() {
+    try {
+        return JSON.parse(localStorage.getItem(orderStorageKey)) || [];
+    } catch {
+        return [];
+    }
+}
+
+function saveOrders(orders) {
+    localStorage.setItem(orderStorageKey, JSON.stringify(orders));
+}
+
+function getPartnerApplications() {
+    try {
+        return JSON.parse(localStorage.getItem(partnerApplicationsStorageKey)) || {};
+    } catch {
+        return {};
+    }
+}
+
+function savePartnerApplications(applications) {
+    localStorage.setItem(partnerApplicationsStorageKey, JSON.stringify(applications));
+}
+
+function getActiveProfile() {
+    if (!hasActiveAccount()) {
+        return null;
+    }
+
+    const profile = getAccountProfile();
+    if (!profile.userId) {
+        const profileWithId = { ...profile, userId: buildUserId(profile) };
+        saveAccountProfile(profileWithId);
+        return profileWithId;
+    }
+
+    return profile;
+}
+
+function getOrdersForActiveAccount() {
+    const profile = getActiveProfile();
+    if (!profile) {
+        return [];
+    }
+
+    return getOrders().filter((order) => order.userId === profile.userId);
+}
+
+function findOrderForTracking() {
+    const orders = getOrdersForActiveAccount();
+    if (!orders.length) {
+        return null;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get("order");
+    return orders.find((order) => order.id === orderId) || orders[0];
+}
+
+function getVendorNameForOrder(order) {
+    const firstItem = order?.items?.[0];
+    if (!firstItem) {
+        return "Mama Meals Kitchen";
+    }
+
+    const vendor = Object.values(vendorShops).find((shop) => (
+        firstItem.image === shop.image ||
+        Object.values(shop.categories).flat().some((item) => item.name === firstItem.name)
+    ));
+
+    return vendor?.name || "Mama Meals Kitchen";
+}
+
+function formatOrderDateKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}${month}${day}`;
+}
+
+function createOrderNumber(date) {
+    const dateKey = formatOrderDateKey(date);
+    const todaysOrders = getOrders().filter((order) => order.id && order.id.startsWith(`MM-${dateKey}-`));
+    const sequence = String(todaysOrders.length + 1).padStart(3, "0");
+    return `MM-${dateKey}-${sequence}`;
+}
+
+function getCartTotals(items = getCart()) {
+    const itemCount = items.reduce((total, item) => total + item.quantity, 0);
+    const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0);
+    const total = itemCount > 0 ? subtotal + deliveryFee : 0;
+
+    return { itemCount, subtotal, total };
+}
+
+function addItemToCart(item) {
+    const items = getCart();
+    const existing = items.find((cartItem) => cartItem.name === item.name);
+
+    if (existing) {
+        existing.quantity += 1;
+    } else {
+        items.push({ ...item, quantity: 1 });
+    }
+
+    saveCart(items);
+    return items;
+}
+
+function updateItemQuantity(name, change) {
+    const items = getCart()
+        .map((item) => item.name === name ? { ...item, quantity: item.quantity + change } : item)
+        .filter((item) => item.quantity > 0);
+
+    saveCart(items);
+    return items;
+}
+
+// Local auth mirrors Firebase Auth flows so the static prototype can be tested now.
+function initAccountPrototype() {
+    document.querySelectorAll("[data-auth-form]").forEach((form) => {
+        const message = form.querySelector("[data-auth-message]") || document.querySelector("[data-auth-message]");
+
+        function showMessage(text, isError = false) {
+            if (message) {
+                message.textContent = text;
+                message.hidden = false;
+                message.classList.toggle("error", isError);
+            } else {
+                alert(text);
+            }
+        }
+
+        form.addEventListener("submit", (event) => {
+            event.preventDefault();
+            if (form.dataset.authForm === "register") {
+                const email = normalizeEmail(form.elements.email.value);
+                const password = form.elements.password.value;
+                const confirmPassword = form.elements.confirmPassword.value;
+
+                if (!email) {
+                    showMessage("Please enter an email address so we can verify your account.", true);
+                    return;
+                }
+
+                if (password.length < 6) {
+                    showMessage("Password must be at least 6 characters.", true);
+                    return;
+                }
+
+                if (password !== confirmPassword) {
+                    showMessage("Passwords do not match.", true);
+                    return;
+                }
+
+                if (findUserByLogin(email)) {
+                    showMessage("An account with this email already exists. Please log in instead.", true);
+                    return;
+                }
+
+                const profile = {
+                    fullName: form.elements.fullName.value.trim(),
+                    phone: form.elements.phone.value.trim(),
+                    email,
+                    location: form.elements.location.value.trim(),
+                    addresses: [form.elements.location.value.trim()].filter(Boolean)
+                };
+                const user = createUserRecord(profile, password);
+                saveUsers([...getUsers(), user]);
+                saveActiveUser(user);
+                showMessage("Account created. We sent a verification email placeholder for Firebase setup.");
+            } else {
+                const loginId = form.elements.loginId.value.trim().toLowerCase();
+                const password = form.elements.password.value;
+                let user = findUserByLogin(loginId);
+
+                if (!user && (loginId === "admin@mamameals.local" || loginId === "admin@mamameals.com")) {
+                    user = createUserRecord({
+                        fullName: "Mama Meals Admin",
+                        phone: "+254 700 000 001",
+                        email: loginId,
+                        location: "Nairobi, Kenya",
+                        addresses: ["Nairobi, Kenya"]
+                    }, password, ["admin"], { emailVerified: true });
+                    saveUsers([...getUsers(), user]);
+                }
+
+                if (!user || user.password !== password) {
+                    showMessage("Login details are not correct. Please check your email or password.", true);
+                    return;
+                }
+
+                saveActiveUser(user);
+            }
+            window.location.href = form.getAttribute("action") || "account.html";
+        });
+    });
+
+    document.querySelectorAll("[data-password-reset]").forEach((button) => {
+        button.addEventListener("click", (event) => {
+            event.preventDefault();
+            const loginValue = document.querySelector("#login-id")?.value.trim() || "";
+            const email = normalizeEmail(prompt("Enter the email address for your password reset", loginValue));
+
+            if (!email) {
+                return;
+            }
+
+            if (!findUserByLogin(email)) {
+                alert("No account found for that email address.");
+                return;
+            }
+
+            savePasswordResetRequests([
+                { email, requestedAt: new Date().toISOString(), status: "queued-placeholder" },
+                ...getPasswordResetRequests()
+            ]);
+            alert("Password reset email placeholder queued. Firebase will send the real email once connected.");
+        });
+    });
+}
+
+function initAccountPage() {
+    const signedOutState = document.querySelector("#account-signed-out");
+    const accountContent = Array.from(document.querySelectorAll(".account-content"));
+    const addAddressButton = document.querySelector("#add-address");
+    const addressList = document.querySelector("#address-list");
+    const partnerDashboardLinks = document.querySelector("#partner-dashboard-links");
+    const adminAccountLink = document.querySelector("#admin-account-link");
+    const verificationStatus = document.querySelector("#email-verification-status");
+    const verificationButton = document.querySelector("#verify-email-button");
+
+    if (!signedOutState || !accountContent.length) {
+        return;
+    }
+
+    const profile = getActiveProfile();
+
+    if (!profile) {
+        signedOutState.classList.add("visible");
+        accountContent.forEach((section) => {
+            section.hidden = true;
+        });
+        return;
+    }
+
+    signedOutState.classList.remove("visible");
+    signedOutState.hidden = true;
+    accountContent.forEach((section) => {
+        section.hidden = false;
+    });
+
+    document.querySelectorAll("[data-profile-field]").forEach((input) => {
+        input.value = profile[input.dataset.profileField] || "";
+    });
+
+    if (verificationStatus && verificationButton) {
+        if (profile.emailVerified) {
+            verificationStatus.textContent = "Email verified";
+            verificationButton.hidden = true;
+        } else {
+            verificationStatus.textContent = "Email verification pending. Firebase will send the live email once connected.";
+            verificationButton.hidden = false;
+            verificationButton.addEventListener("click", () => {
+                updateStoredUser(profile.userId, () => ({ emailVerified: true }));
+                window.location.reload();
+            });
+        }
+    }
+
+    if (adminAccountLink) {
+        adminAccountLink.hidden = !isAdminProfile(profile);
+    }
+
+    function saveProfileAddress(address) {
+        const currentProfile = getAccountProfile() || profile;
+        const addresses = currentProfile.addresses || [];
+        saveAccountProfile({ ...currentProfile, addresses: [...addresses, address] });
+    }
+
+    function renderAddress(address) {
+        const row = document.createElement("article");
+        row.className = "mini-list-item";
+        row.innerHTML = `
+            <span>${address}</span>
+            <div>
+                <button type="button" data-placeholder-alert="Address editing will be connected later.">Edit</button>
+                <button type="button" data-delete-item>Delete</button>
+            </div>
+        `;
+        addressList.appendChild(row);
+    }
+
+    if (addAddressButton && addressList) {
+        addressList.innerHTML = "";
+        (profile.addresses || [profile.location].filter(Boolean)).forEach(renderAddress);
+
+        addAddressButton.addEventListener("click", () => {
+            const address = prompt("Enter a new delivery address");
+            if (!address) {
+                return;
+            }
+
+            saveProfileAddress(address);
+            renderAddress(address);
+        });
+    }
+
+    if (partnerDashboardLinks) {
+        const applications = getPartnerApplications();
+        const userApplications = applications[profile.userId] || {};
+        const links = [];
+
+        if (userHasRole(profile, "vendor") || userApplications.cook?.status === "approved") {
+            links.push('<a class="account-row-link" href="vendor-dashboard.html">My Vendor Dashboard</a>');
+        } else if (userApplications.cook?.status === "pending") {
+            links.push('<button class="text-action partner-approve-button" type="button" data-approve-application="cook">Cook application pending - simulate admin approval</button>');
+        }
+
+        if (userHasRole(profile, "rider") || userApplications.rider?.status === "approved") {
+            links.push('<a class="account-row-link" href="rider-dashboard.html">My Rider Dashboard</a>');
+        } else if (userApplications.rider?.status === "pending") {
+            links.push('<button class="text-action partner-approve-button" type="button" data-approve-application="rider">Rider application pending - simulate admin approval</button>');
+        }
+
+        partnerDashboardLinks.innerHTML = links.join("");
+        partnerDashboardLinks.hidden = links.length === 0;
+    }
+}
+
+function initAdminDashboard() {
+    const adminDashboard = document.querySelector("[data-admin-dashboard]");
+    const adminDenied = document.querySelector("#admin-denied");
+    const adminContent = Array.from(document.querySelectorAll(".admin-content"));
+
+    if (!adminDashboard || !adminDenied) {
+        return;
+    }
+
+    const profile = getActiveProfile();
+    if (!isAdminProfile(profile)) {
+        adminDenied.classList.add("visible");
+        adminContent.forEach((section) => {
+            section.hidden = true;
+        });
+        return;
+    }
+
+    adminDenied.classList.remove("visible");
+    adminDenied.hidden = true;
+    adminContent.forEach((section) => {
+        section.hidden = false;
+    });
+}
+
+function hasApprovedPartnerApplication(type) {
+    const profile = getActiveProfile();
+    if (!profile) {
+        return false;
+    }
+
+    if ((type === "cook" && userHasRole(profile, "vendor")) || (type === "rider" && userHasRole(profile, "rider"))) {
+        return true;
+    }
+
+    const applications = getPartnerApplications();
+    return applications[profile.userId]?.[type]?.status === "approved";
+}
+
+function initVendorDashboard() {
+    const vendorDashboard = document.querySelector("[data-vendor-dashboard]");
+    const vendorDenied = document.querySelector("#vendor-denied");
+    const vendorContent = Array.from(document.querySelectorAll(".vendor-content"));
+
+    if (!vendorDashboard || !vendorDenied) {
+        return;
+    }
+
+    if (!hasApprovedPartnerApplication("cook")) {
+        vendorDenied.classList.add("visible");
+        vendorContent.forEach((section) => {
+            section.hidden = true;
+        });
+        return;
+    }
+
+    vendorDenied.classList.remove("visible");
+    vendorDenied.hidden = true;
+    vendorContent.forEach((section) => {
+        section.hidden = false;
+    });
+}
+
+function initRiderDashboard() {
+    const riderDashboard = document.querySelector("[data-rider-dashboard]");
+    const riderDenied = document.querySelector("#rider-denied");
+    const riderContent = Array.from(document.querySelectorAll(".rider-content"));
+
+    if (!riderDashboard || !riderDenied) {
+        return;
+    }
+
+    if (!hasApprovedPartnerApplication("rider")) {
+        riderDenied.classList.add("visible");
+        riderContent.forEach((section) => {
+            section.hidden = true;
+        });
+        return;
+    }
+
+    riderDenied.classList.remove("visible");
+    riderDenied.hidden = true;
+    riderContent.forEach((section) => {
+        section.hidden = false;
+    });
+}
+
+function initApplicationForms() {
+    document.querySelectorAll("[data-application-form]").forEach((form) => {
+        form.addEventListener("submit", (event) => {
+            event.preventDefault();
+
+            const type = form.dataset.applicationForm;
+            const profile = getActiveProfile();
+
+            if (!profile) {
+                alert("Please create an account or log in before applying.");
+                window.location.href = "register.html";
+                return;
+            }
+
+            const emailInput = form.querySelector('input[type="email"]');
+            const email = emailInput?.value.trim() || profile.email || "";
+            const applications = getPartnerApplications();
+            const userApplications = applications[profile.userId] || {};
+
+            userApplications[type] = {
+                type,
+                status: "pending",
+                email,
+                submittedAt: new Date().toISOString(),
+                verificationEmail: {
+                    status: email ? "queued-placeholder" : "missing-email",
+                    message: "Backend email provider will send the real verification email here."
+                }
+            };
+
+            applications[profile.userId] = userApplications;
+            savePartnerApplications(applications);
+
+            const successMessage = form.querySelector("[data-application-success]");
+            if (successMessage) {
+                successMessage.hidden = false;
+            }
+
+            form.reset();
+        });
+    });
+}
+
+function initGlobalPrototypeActions() {
+    document.addEventListener("click", (event) => {
+        const approveButton = event.target.closest("[data-approve-application]");
+        if (approveButton) {
+            const profile = getActiveProfile();
+            const applications = getPartnerApplications();
+            const userApplications = applications[profile.userId] || {};
+            const type = approveButton.dataset.approveApplication;
+
+            if (userApplications[type]) {
+                userApplications[type].status = "approved";
+                userApplications[type].approvedAt = new Date().toISOString();
+                applications[profile.userId] = userApplications;
+                savePartnerApplications(applications);
+                grantUserRole(type === "cook" ? "vendor" : "rider");
+                window.location.reload();
+            }
+            return;
+        }
+
+        const placeholderButton = event.target.closest("[data-placeholder-alert]");
+        if (placeholderButton) {
+            event.preventDefault();
+            alert(placeholderButton.dataset.placeholderAlert);
+            return;
+        }
+
+        const notificationButton = event.target.closest(".notification-button");
+        if (notificationButton) {
+            event.preventDefault();
+            alert("Notifications and promotional offers will appear here soon.");
+            return;
+        }
+
+        const deleteButton = event.target.closest("[data-delete-item]");
+        if (deleteButton) {
+            deleteButton.closest(".mini-list-item").remove();
+        }
+    });
+
+    const logoutButton = document.querySelector("#logout-button");
+    if (logoutButton) {
+        logoutButton.addEventListener("click", () => {
+            clearActiveAccount();
+            alert("You have been logged out.");
+            window.location.href = "login.html";
+        });
+    }
+}
+
+function initAuthHeader() {
+    const authActions = Array.from(document.querySelectorAll("[data-auth-actions]"));
+    const authWelcomes = Array.from(document.querySelectorAll("[data-auth-welcome]"));
+    const publicOnlySections = Array.from(document.querySelectorAll("[data-public-only]"));
+
+    if (!authActions.length && !authWelcomes.length && !publicOnlySections.length) {
+        return;
+    }
+
+    const profile = getActiveProfile();
+    if (!profile) {
+        authActions.forEach((group) => {
+            group.hidden = false;
+        });
+        authWelcomes.forEach((welcome) => {
+            welcome.hidden = true;
+            welcome.textContent = "";
+        });
+        publicOnlySections.forEach((section) => {
+            section.hidden = false;
+        });
+        return;
+    }
+
+    const firstName = (profile.fullName || "there").trim().split(/\s+/)[0];
+    authActions.forEach((group) => {
+        group.hidden = true;
+    });
+    authWelcomes.forEach((welcome) => {
+        welcome.hidden = false;
+        welcome.textContent = `Hi, ${firstName}`;
+    });
+    publicOnlySections.forEach((section) => {
+        section.hidden = true;
+    });
+}
+
+function initNotificationButtons() {
+    document.querySelectorAll(".app-header, .checkout-header").forEach((header) => {
+        if (header.querySelector(".notification-button")) {
+            return;
+        }
+
+        const button = document.createElement("button");
+        button.className = "notification-button";
+        button.type = "button";
+        button.setAttribute("aria-label", "Notifications and promotional offers");
+        button.innerHTML = "&#128276;";
+
+        const welcome = header.querySelector("[data-auth-welcome]");
+        const authActions = header.querySelector("[data-auth-actions]");
+        const reference = welcome || authActions;
+        const parent = reference?.parentElement || header;
+        if (welcome) {
+            parent.insertBefore(button, welcome);
+        } else if (authActions) {
+            parent.insertBefore(button, authActions);
+        } else {
+            header.appendChild(button);
+        }
+    });
+}
+
+function initGlobalFeedback() {
+    const statusRegion = document.createElement("div");
+    statusRegion.className = "app-status-region";
+    statusRegion.setAttribute("aria-live", "polite");
+    statusRegion.hidden = true;
+    document.body.appendChild(statusRegion);
+
+    function showStatus(message) {
+        statusRegion.textContent = message;
+        statusRegion.hidden = false;
+        setTimeout(() => {
+            statusRegion.hidden = true;
+        }, 3500);
+    }
+
+    window.addEventListener("error", () => {
+        showStatus("Something went wrong. Please try again.");
+    });
+
+    window.addEventListener("unhandledrejection", () => {
+        showStatus("Unable to complete that action right now.");
+    });
+}
+
+function initOrderHistoryPage() {
+    const orderList = document.querySelector("#order-history-list");
+    const emptyState = document.querySelector("#order-empty-state");
+
+    if (!orderList || !emptyState) {
+        return;
+    }
+
+    function getStatusClass(status) {
+        const normalized = status.toLowerCase();
+        if (normalized.includes("cancelled")) return "status-cancelled";
+        if (normalized.includes("delivered")) return "status-delivered";
+        if (normalized.includes("out for delivery")) return "status-delivery";
+        if (normalized.includes("preparing")) return "status-preparing";
+        return "status-pending";
+    }
+
+    function getStatusStyle(status) {
+        const normalized = status.toLowerCase();
+        if (normalized.includes("cancelled")) return "background:#f8e9e7;color:#9a2d23;";
+        if (normalized.includes("delivered")) return "background:#f1f3f5;color:#263029;";
+        if (normalized.includes("out for delivery")) return "background:#eef7ef;color:#225a26;";
+        if (normalized.includes("preparing")) return "background:#fff8d6;color:#7a6100;";
+        return "";
+    }
+
+    function renderOrders() {
+        const orders = getOrdersForActiveAccount();
+        orderList.innerHTML = "";
+        orderList.style.display = orders.length ? "grid" : "none";
+        orderList.style.gap = "16px";
+        emptyState.classList.toggle("visible", orders.length === 0);
+
+        orders.forEach((order) => {
+            const card = document.createElement("article");
+            card.className = "order-card";
+            card.dataset.orderId = order.id;
+            card.innerHTML = `
+                <div class="order-topline">
+                    <div>
+                        <h2>Order ${order.id}</h2>
+                        <p>${order.dateTime || order.date}</p>
+                    </div>
+                    <span class="status-badge ${getStatusClass(order.status)}" style="${getStatusStyle(order.status)}">${order.status}</span>
+                </div>
+                <p class="support-copy"><strong>Delivery address:</strong> ${order.deliveryAddress}</p>
+                <p class="support-copy"><strong>Payment method:</strong> ${order.paymentMethod}</p>
+                <div class="order-items">
+                    ${order.items.map((item) => `
+                        <div class="order-item" data-name="${item.name}" data-price="${item.price}" data-image="${item.image}" data-quantity="${item.quantity || 1}">
+                            <img src="${item.image}" alt="${item.name}">
+                            <span>${item.name} x ${item.quantity || 1} - ${formatShillings(item.price * (item.quantity || 1))}</span>
+                        </div>
+                    `).join("")}
+                </div>
+                <div class="order-breakdown">
+                    <div><span>Subtotal</span><strong>${formatShillings(order.subtotal || 0)}</strong></div>
+                    <div><span>Delivery fee</span><strong>${formatShillings(order.deliveryFee || deliveryFee)}</strong></div>
+                    <div><span>Total</span><strong>${formatShillings(order.total)}</strong></div>
+                </div>
+                <div class="order-footer">
+                    <strong>Total paid: ${formatShillings(order.total)}</strong>
+                    <div>
+                        <a class="small-action-button track-order-button" href="order-tracking.html?order=${encodeURIComponent(order.id)}">Track Order</a>
+                        <button class="small-action-button reorder-button" type="button">Reorder</button>
+                        <button class="small-action-button review-button" type="button">Leave Review</button>
+                    </div>
+                </div>
+                <div class="status-test-controls" aria-label="Test order status controls">
+                    <button class="small-action-button" type="button" data-status-update="🟡 Preparing Your Meal">Mark as Preparing</button>
+                    <button class="small-action-button delivery-status-button" type="button" data-status-update="🟢 Out for Delivery">Mark as Out for Delivery</button>
+                    <button class="small-action-button delivered-status-button" type="button" data-status-update="✅ Delivered">Mark as Delivered</button>
+                    <button class="small-action-button cancelled-status-button" type="button" data-status-update="❌ Cancelled">Mark as Cancelled</button>
+                </div>
+            `;
+            orderList.appendChild(card);
+        });
+    }
+
+    orderList.addEventListener("click", (event) => {
+        const reorderButton = event.target.closest(".reorder-button");
+        const reviewButton = event.target.closest(".review-button");
+        const statusButton = event.target.closest("[data-status-update]");
+
+        if (statusButton) {
+            const orderCard = statusButton.closest(".order-card");
+            const orderId = orderCard.dataset.orderId;
+            const nextStatus = statusButton.dataset.statusUpdate;
+            const updatedOrders = getOrders().map((order) => {
+                if (order.id !== orderId) {
+                    return order;
+                }
+
+                return { ...order, status: nextStatus };
+            });
+
+            saveOrders(updatedOrders);
+            renderOrders();
+            return;
+        }
+
+        if (reorderButton) {
+            const orderCard = reorderButton.closest(".order-card");
+            const items = Array.from(orderCard.querySelectorAll(".order-item"));
+
+            items.forEach((item) => {
+                const quantity = Number(item.dataset.quantity || 1);
+                for (let count = 0; count < quantity; count += 1) {
+                    addItemToCart({
+                        name: item.dataset.name,
+                        price: Number(item.dataset.price),
+                        image: item.dataset.image
+                    });
+                }
+            });
+
+            alert("Order items added to your cart.");
+            window.location.href = "cart.html";
+        }
+
+        if (reviewButton) {
+            const orderId = reviewButton.closest(".order-card").dataset.orderId;
+            alert(`Review form for ${orderId} will be connected later.`);
+        }
+    });
+
+    renderOrders();
+}
+
+function initOrderTrackingPage() {
+    const trackingRoot = document.querySelector("[data-order-tracking]");
+    const emptyState = document.querySelector("#tracking-empty-state");
+    const trackingContent = document.querySelector(".tracking-content");
+
+    if (!trackingRoot || !emptyState || !trackingContent) {
+        return;
+    }
+
+    const order = findOrderForTracking();
+    if (!order) {
+        emptyState.classList.add("visible");
+        trackingContent.hidden = true;
+        return;
+    }
+
+    const normalizedStatus = (order.status || "").toLowerCase();
+    const activeStep = normalizedStatus.includes("delivered")
+        ? "delivered"
+        : normalizedStatus.includes("out for delivery")
+            ? "out"
+            : normalizedStatus.includes("preparing")
+                ? "preparing"
+                : "confirmed";
+    const stepOrder = ["confirmed", "preparing", "out", "delivered"];
+    const activeIndex = stepOrder.indexOf(activeStep);
+    const etaByStep = {
+        confirmed: "40-50 min",
+        preparing: "30-40 min",
+        out: "10-20 min",
+        delivered: "Delivered"
+    };
+
+    emptyState.classList.remove("visible");
+    emptyState.hidden = true;
+    trackingContent.hidden = false;
+
+    document.querySelector("#tracking-order-id").textContent = `Order ${order.id}`;
+    document.querySelector("#tracking-order-meta").textContent = order.dateTime || "Order time pending";
+    document.querySelector("#tracking-status").textContent = order.status || "Confirmed";
+    document.querySelector("#tracking-eta").textContent = etaByStep[activeStep];
+    document.querySelector("#tracking-vendor-name").textContent = getVendorNameForOrder(order);
+    document.querySelector("#tracking-total").textContent = formatShillings(order.total || 0);
+    document.querySelector("#tracking-address").textContent = order.deliveryAddress || "Pending";
+
+    document.querySelectorAll(".tracking-step").forEach((step) => {
+        const stepIndex = stepOrder.indexOf(step.dataset.step);
+        step.classList.toggle("active", stepIndex <= activeIndex);
+        step.classList.toggle("current", stepIndex === activeIndex);
+    });
+}
+
+function initHomePage() {
+    const vendors = Array.from(document.querySelectorAll(".vendor-card"));
+    const searchInput = document.querySelector("#meal-search");
+    const categoryButtons = Array.from(document.querySelectorAll(".category-chip"));
+    const resultCount = document.querySelector("#result-count");
+    const emptyState = document.querySelector("#empty-state");
+    const searchAction = document.querySelector("#search-action");
+    const searchClear = document.querySelector("#search-clear");
+    const cartBar = document.querySelector("#cart-bar");
+    const cartCount = document.querySelector("#cart-count");
+    const cartLatest = document.querySelector("#cart-latest");
+    const cartTotal = document.querySelector("#cart-total");
+    const promoTrack = document.querySelector("#promo-track");
+    const promoDots = Array.from(document.querySelectorAll(".promo-dot"));
+    const pickupFilter = document.querySelector("#filter-pickup");
+    const offersFilter = document.querySelector("#filter-offers");
+    const feeFilter = document.querySelector("#filter-fee");
+    const feeValue = document.querySelector("#filter-fee-value");
+    const timeFilter = document.querySelector("#filter-time");
+    const timeValue = document.querySelector("#filter-time-value");
+    const ratingFilter = document.querySelector("#filter-rating");
+    const priceFilter = document.querySelector("#filter-price");
+    const sortFilter = document.querySelector("#filter-sort");
+
+    if (!vendors.length) {
+        return;
+    }
+
+    let activeCategory = "All";
+    let promoIndex = 0;
+
+    function updateHomeCartBar(items = getCart(), latestName = "") {
+        const { itemCount, total } = getCartTotals(items);
+        cartCount.textContent = `${itemCount} ${itemCount === 1 ? "item" : "items"}`;
+        cartLatest.textContent = latestName ? `Added ${latestName}` : "Ready when you are";
+        cartTotal.textContent = formatShillings(total);
+        cartBar.classList.toggle("visible", itemCount > 0);
+    }
+
+    // Home search stays local for now; this can later call Firebase search indexes.
+    function applyFilters() {
+        const query = searchInput.value.trim().toLowerCase();
+        const pickupOnly = Boolean(pickupFilter?.checked);
+        const offersOnly = Boolean(offersFilter?.checked);
+        const maxFee = Number(feeFilter?.value || 9999);
+        const maxTime = Number(timeFilter?.value || 9999);
+        const minRating = Number(ratingFilter?.value || 0);
+        const maxPrice = Number(priceFilter?.value || 9999);
+        const sortMode = sortFilter?.value || "recommended";
+        let visibleCount = 0;
+        const sortedVendors = [...vendors].sort((a, b) => {
+            if (sortMode === "rating") {
+                return Number(b.dataset.rating || 0) - Number(a.dataset.rating || 0);
+            }
+
+            if (sortMode === "fastest") {
+                return Number(a.dataset.time || 9999) - Number(b.dataset.time || 9999);
+            }
+
+            return vendors.indexOf(a) - vendors.indexOf(b);
+        });
+
+        sortedVendors.forEach((vendor) => {
+            vendor.parentElement.appendChild(vendor);
+        });
+
+        vendors.forEach((vendor) => {
+            const name = vendor.dataset.name.toLowerCase();
+            const keywords = vendor.dataset.keywords.toLowerCase();
+            const description = vendor.querySelector(".vendor-details p").textContent.toLowerCase();
+            const matchesSearch = !query || name.includes(query) || description.includes(query) || keywords.includes(query);
+            const matchesCategory = activeCategory === "All" || keywords.includes(activeCategory.toLowerCase());
+            const matchesPickup = !pickupOnly || vendor.dataset.pickup === "true";
+            const matchesOffers = !offersOnly || vendor.dataset.offers === "true";
+            const matchesFee = Number(vendor.dataset.fee || 0) <= maxFee;
+            const matchesTime = Number(vendor.dataset.time || 0) <= maxTime;
+            const matchesRating = Number(vendor.dataset.rating || 0) >= minRating;
+            const matchesPrice = Number(vendor.dataset.price || 0) <= maxPrice;
+            const isVisible = matchesSearch && matchesCategory && matchesPickup && matchesOffers && matchesFee && matchesTime && matchesRating && matchesPrice;
+
+            vendor.classList.toggle("hidden", !isVisible);
+            if (isVisible) {
+                visibleCount += 1;
+            }
+        });
+
+        resultCount.textContent = `${visibleCount} nearby`;
+        emptyState.classList.toggle("visible", visibleCount === 0);
+        searchClear.hidden = query.length === 0;
+        if (feeValue && feeFilter) {
+            feeValue.textContent = `Up to KSh ${feeFilter.value}`;
+        }
+        if (timeValue && timeFilter) {
+            timeValue.textContent = `Up to ${timeFilter.value} min`;
+        }
+    }
+
+    function runSearch() {
+        applyFilters();
+        document.querySelector("#vendor-list").scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    categoryButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+            categoryButtons.forEach((chip) => chip.classList.remove("active"));
+            button.classList.add("active");
+            activeCategory = button.dataset.category;
+            applyFilters();
+        });
+    });
+
+    searchInput.addEventListener("input", applyFilters);
+    searchInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+            runSearch();
+        }
+    });
+
+    searchAction.addEventListener("click", runSearch);
+    searchAction.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            runSearch();
+        }
+    });
+
+    searchClear.addEventListener("click", () => {
+        searchInput.value = "";
+        categoryButtons.forEach((chip) => chip.classList.remove("active"));
+        categoryButtons[0].classList.add("active");
+        activeCategory = "All";
+        applyFilters();
+        searchInput.focus();
+    });
+    searchClear.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            searchClear.click();
+        }
+    });
+
+    [pickupFilter, offersFilter, feeFilter, timeFilter, ratingFilter, priceFilter, sortFilter].filter(Boolean).forEach((control) => {
+        control.addEventListener("input", applyFilters);
+        control.addEventListener("change", applyFilters);
+    });
+
+    vendors.forEach((vendor) => {
+        function openShop() {
+            window.location.href = `shop.html?vendor=${encodeURIComponent(vendor.dataset.vendorId)}`;
+        }
+
+        vendor.addEventListener("click", (event) => {
+            if (event.target.closest("button")) {
+                return;
+            }
+            openShop();
+        });
+
+        vendor.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openShop();
+            }
+        });
+    });
+
+    cartBar.addEventListener("click", () => {
+        window.location.href = "cart.html";
+    });
+
+    function showPromo(index) {
+        promoIndex = index;
+        promoTrack.style.transform = `translateX(-${promoIndex * 100}%)`;
+        promoDots.forEach((dot, dotIndex) => {
+            dot.classList.toggle("active", dotIndex === promoIndex);
+        });
+    }
+
+    setInterval(() => {
+        showPromo((promoIndex + 1) % promoDots.length);
+    }, 4500);
+
+    applyFilters();
+    updateHomeCartBar();
+}
+
+function initShopPage() {
+    const shopHero = document.querySelector("#shop-hero");
+    const shopMenu = document.querySelector("#shop-menu");
+    const shopTitle = document.querySelector("#shop-title");
+    const cartBar = document.querySelector("#cart-bar");
+    const cartCount = document.querySelector("#cart-count");
+    const cartLatest = document.querySelector("#cart-latest");
+    const cartTotal = document.querySelector("#cart-total");
+
+    if (!shopHero || !shopMenu || !shopTitle) {
+        return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const vendorId = params.get("vendor") || "bibis";
+    const shop = vendorShops[vendorId] || vendorShops.bibis;
+
+    function updateShopCartBar(items = getCart(), latestName = "") {
+        const { itemCount, total } = getCartTotals(items);
+        cartCount.textContent = `${itemCount} ${itemCount === 1 ? "item" : "items"}`;
+        cartLatest.textContent = latestName ? `Added ${latestName}` : "Ready when you are";
+        cartTotal.textContent = formatShillings(total);
+        cartBar.classList.toggle("visible", itemCount > 0);
+    }
+
+    shopTitle.textContent = shop.name;
+    shopHero.innerHTML = `
+        <img src="${shop.image}" alt="${shop.name}">
+        <div class="shop-hero-copy">
+            <h2>${shop.name}</h2>
+            <p>${shop.description}</p>
+            <div class="vendor-meta"><span>${shop.meta}</span><span>Local kitchen</span></div>
+        </div>
+    `;
+
+    shopMenu.innerHTML = Object.entries(shop.categories).map(([category, items]) => `
+        <section class="checkout-panel menu-category">
+            <div class="section-heading">
+                <h2>${category}</h2>
+                <span>${items.length} items</span>
+            </div>
+            <div class="menu-item-list">
+                ${items.map((item) => `
+                    <article class="menu-item">
+                        <div>
+                            <h3>${item.name}</h3>
+                            <p>${item.description}</p>
+                            <strong>${formatShillings(item.price)}</strong>
+                        </div>
+                        <button class="menu-add-button" type="button" data-name="${item.name}" data-price="${item.price}" data-image="${shop.image}">Add to Cart</button>
+                    </article>
+                `).join("")}
+            </div>
+        </section>
+    `).join("");
+
+    shopMenu.addEventListener("click", (event) => {
+        const button = event.target.closest(".menu-add-button");
+        if (!button) {
+            return;
+        }
+
+        const item = {
+            name: button.dataset.name,
+            price: Number(button.dataset.price),
+            image: button.dataset.image
+        };
+
+        updateShopCartBar(addItemToCart(item), item.name);
+    });
+
+    cartBar.addEventListener("click", () => {
+        window.location.href = "cart.html";
+    });
+
+    updateShopCartBar();
+}
+
+function initCartPage() {
+    const checkoutItems = document.querySelector("#checkout-items");
+    const checkoutEmpty = document.querySelector("#checkout-empty");
+    const checkoutCount = document.querySelector("#checkout-count");
+    const checkoutSubtotal = document.querySelector("#checkout-subtotal");
+    const checkoutDelivery = document.querySelector("#checkout-delivery");
+    const checkoutTotal = document.querySelector("#checkout-total");
+    const placeOrderButton = document.querySelector("#place-order");
+    const confirmationScreen = document.querySelector("#confirmation-screen");
+    const confirmationCopy = document.querySelector("#confirmation-copy");
+    const trackOrderLink = document.querySelector("#track-order-link");
+    const deliveryAddress = document.querySelector("#delivery-address");
+    const useTestAddressButton = document.querySelector("#use-test-address");
+    const paymentOptions = Array.from(document.querySelectorAll(".payment-option"));
+
+    if (!checkoutItems) {
+        return;
+    }
+
+    function renderCart() {
+        const items = getCart();
+        const { itemCount, subtotal, total } = getCartTotals(items);
+
+        checkoutItems.innerHTML = "";
+
+        items.forEach((item) => {
+            const row = document.createElement("article");
+            row.className = "checkout-item";
+            row.innerHTML = `
+                <img src="${item.image}" alt="${item.name}">
+                <div class="checkout-item-info">
+                    <h3>${item.name}</h3>
+                    <p>${formatShillings(item.price)} each</p>
+                    <div class="quantity-controls" aria-label="Quantity controls for ${item.name}">
+                        <button type="button" data-action="decrease" data-name="${item.name}">-</button>
+                        <span>${item.quantity}</span>
+                        <button type="button" data-action="increase" data-name="${item.name}">+</button>
+                    </div>
+                </div>
+                <strong>${formatShillings(item.price * item.quantity)}</strong>
+            `;
+            checkoutItems.appendChild(row);
+        });
+
+        checkoutCount.textContent = `${itemCount} ${itemCount === 1 ? "item" : "items"}`;
+        checkoutSubtotal.textContent = formatShillings(subtotal);
+        checkoutDelivery.textContent = itemCount > 0 ? formatShillings(deliveryFee) : formatShillings(0);
+        checkoutTotal.textContent = formatShillings(total);
+        checkoutEmpty.classList.toggle("visible", itemCount === 0);
+        placeOrderButton.disabled = itemCount === 0;
+    }
+
+    checkoutItems.addEventListener("click", (event) => {
+        const button = event.target.closest("button");
+        if (!button) {
+            return;
+        }
+
+        const change = button.dataset.action === "increase" ? 1 : -1;
+        updateItemQuantity(button.dataset.name, change);
+        renderCart();
+    });
+
+    paymentOptions.forEach((option) => {
+        option.addEventListener("click", () => {
+            paymentOptions.forEach((current) => current.classList.remove("selected"));
+            option.classList.add("selected");
+        });
+    });
+
+    if (useTestAddressButton) {
+        useTestAddressButton.addEventListener("click", () => {
+            deliveryAddress.value = "House 45, Mumias Road, Lavington Estate — near Lavington Shopping Centre";
+            deliveryAddress.classList.remove("field-error");
+            deliveryAddress.focus();
+        });
+    }
+
+    placeOrderButton.addEventListener("click", () => {
+        const items = getCart();
+        if (!items.length) {
+            return;
+        }
+
+        const trimmedAddress = deliveryAddress.value.trim();
+
+        if (!hasActiveAccount()) {
+            alert("Please create an account or log in before placing an order.");
+            window.location.href = "register.html";
+            return;
+        }
+
+        if (trimmedAddress.length < 10) {
+            deliveryAddress.focus();
+            deliveryAddress.classList.add("field-error");
+            alert("Please enter a clearer delivery address with at least 10 characters.");
+            return;
+        }
+
+        deliveryAddress.classList.remove("field-error");
+        const paymentMethod = document.querySelector("input[name='payment-method']:checked").value;
+        confirmationCopy.textContent = "✅ Order placed successfully! You can view it in your Order History";
+        confirmationScreen.classList.add("visible");
+        const profile = getActiveProfile();
+        const { subtotal, total } = getCartTotals(items);
+        const now = new Date();
+        const order = {
+            id: createOrderNumber(now),
+            userId: profile.userId,
+            dateTime: now.toLocaleString("en-GB", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }),
+            timestamp: now.toISOString(),
+            status: "🟡 Order Received – Preparing Soon",
+            deliveryAddress: trimmedAddress,
+            paymentMethod,
+            subtotal,
+            deliveryFee,
+            items,
+            total
+        };
+        // Prototype order persistence; replace with Firebase order writes later.
+        saveOrders([order, ...getOrders()]);
+        if (trackOrderLink) {
+            trackOrderLink.href = `order-tracking.html?order=${encodeURIComponent(order.id)}`;
+        }
+        saveCart([]);
+        renderCart();
+    });
+
+    renderCart();
+}
+
+initHomePage();
+initShopPage();
+initCartPage();
+initAccountPrototype();
+initAccountPage();
+initAdminDashboard();
+initVendorDashboard();
+initRiderDashboard();
+initApplicationForms();
+initGlobalPrototypeActions();
+initNotificationButtons();
+initAuthHeader();
+initGlobalFeedback();
+initOrderHistoryPage();
+initOrderTrackingPage();

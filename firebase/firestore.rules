@@ -1,0 +1,88 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    function isApprovedVendor(vendorId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/vendors/$(vendorId))
+        && get(/databases/$(database)/documents/vendors/$(vendorId)).data.ownerId == request.auth.uid
+        && get(/databases/$(database)/documents/vendors/$(vendorId)).data.status == "approved";
+    }
+
+    function isApprovedRider(riderId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/riders/$(riderId))
+        && get(/databases/$(database)/documents/riders/$(riderId)).data.userId == request.auth.uid
+        && get(/databases/$(database)/documents/riders/$(riderId)).data.status == "approved";
+    }
+
+    match /users/{userId} {
+      allow create: if isOwner(userId);
+      allow read, update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /vendors/{vendorId} {
+      allow read: if true;
+      allow create: if signedIn();
+      allow update: if isApprovedVendor(vendorId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /riders/{riderId} {
+      allow create: if signedIn();
+      allow read, update: if isApprovedRider(riderId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.userId == request.auth.uid)
+        || (signedIn() && resource.data.vendorOwnerId == request.auth.uid)
+        || (signedIn() && resource.data.riderUserId == request.auth.uid);
+      allow update: if isAdmin()
+        || (signedIn() && resource.data.vendorOwnerId == request.auth.uid)
+        || (signedIn() && resource.data.riderUserId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    match /menuItems/{menuItemId} {
+      allow read: if true;
+      allow create, update: if signedIn()
+        && request.resource.data.vendorOwnerId == request.auth.uid;
+      allow delete: if signedIn()
+        && resource.data.vendorOwnerId == request.auth.uid;
+    }
+
+    match /vendorApplications/{applicationId} {
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    match /riderApplications/{applicationId} {
+      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    match /adminSettings/{settingId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Mama Meals</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="account-page">
+    <header class="checkout-header">
+        <a class="back-link" href="index.html" aria-label="Return to Mama Meals home page">Back</a>
+        <div>
+            <span class="location-kicker">Customer account</span>
+            <h1>Create Account</h1>
+        </div>
+    </header>
+
+    <main class="account-layout auth-layout">
+        <section class="checkout-panel auth-panel">
+            <h2>Sign up as a customer</h2>
+            <p class="support-copy">Create your Mama Meals account to save addresses, reorder favorites, and track deliveries.</p>
+
+            <form class="account-form" data-auth-form="register" action="account.html">
+                <label class="field-label" for="register-name">Full Name</label>
+                <input class="text-field" id="register-name" name="fullName" type="text" required>
+
+                <label class="field-label" for="register-phone">Phone Number (required for OTP)</label>
+                <input class="text-field" id="register-phone" name="phone" type="tel" required>
+
+                <label class="field-label" for="register-email">Email Address</label>
+                <input class="text-field" id="register-email" name="email" type="email" required>
+
+                <label class="field-label" for="register-password">Password</label>
+                <input class="text-field" id="register-password" name="password" type="password" required>
+
+                <label class="field-label" for="register-confirm-password">Confirm Password</label>
+                <input class="text-field" id="register-confirm-password" name="confirmPassword" type="password" required>
+
+                <label class="field-label" for="register-location">Delivery Location / Area</label>
+                <input class="text-field" id="register-location" name="location" type="text" required>
+
+                <label class="checkbox-row">
+                    <input type="checkbox" required>
+                    <span>I agree to terms and conditions</span>
+                </label>
+
+                <button class="place-order-button" type="submit">Create Account</button>
+                <p class="auth-message" data-auth-message hidden></p>
+            </form>
+
+            <p class="form-link">Already have an account? <a href="login.html">Log in here</a></p>
+        </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+        <a class="nav-item" href="index.html" aria-label="Home"><span class="nav-icon" aria-hidden="true">&#8962;</span></a>
+        <a class="nav-item" href="order-history.html" aria-label="Orders"><span class="nav-icon" aria-hidden="true">&#9636;</span></a>
+        <a class="nav-item active" href="account.html" aria-label="Account" aria-current="page"><span class="nav-icon" aria-hidden="true">&#9675;</span></a>
+    </nav>
+
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

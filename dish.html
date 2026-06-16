@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dish Details - Mama Meals</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="account-page">
+    <header class="checkout-header">
+        <a class="back-link" id="dish-back-link" href="index.html" aria-label="Return to vendor shop">Back</a>
+        <div>
+            <span class="location-kicker">Dish details</span>
+            <h1 id="dish-title">Dish Details</h1>
+        </div>
+        <span data-auth-actions>
+            <a class="auth-link" href="register.html">Sign Up</a>
+            <a class="auth-link" href="login.html">Log In</a>
+        </span>
+        <a class="auth-welcome" href="account.html" data-auth-welcome hidden></a>
+    </header>
+
+    <main class="dish-layout">
+        <section class="dish-detail-card checkout-panel" id="dish-detail"></section>
+    </main>
+
+    <button class="cart-bar" id="cart-bar" type="button" aria-live="polite" aria-label="Open cart and checkout">
+        <span><strong id="cart-count">0 items</strong><small id="cart-latest">Ready when you are</small></span>
+        <span id="cart-total">KSh 0</span>
+    </button>
+
+    <nav class="bottom-nav" aria-label="Main navigation">
+        <a class="nav-item" href="index.html" aria-label="Home"><span class="nav-icon" aria-hidden="true">&#8962;</span></a>
+        <a class="nav-item" href="order-history.html" aria-label="Orders"><span class="nav-icon" aria-hidden="true">&#9636;</span></a>
+        <a class="nav-item" href="account.html" aria-label="Account"><span class="nav-icon" aria-hidden="true">&#9675;</span></a>
+    </nav>
+
+    <script src="assets/js/app.js"></script>
+</body>
+</html>

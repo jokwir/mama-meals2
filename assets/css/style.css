@@ -537,6 +537,62 @@ main {
     line-height: 1.45;
 }
 
+.vendor-title-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.vendor-logo {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex: 0 0 auto;
+    border: 1px solid var(--line);
+}
+
+.detail-meta {
+    margin: 12px 0;
+}
+
+.open-status {
+    background: #eef7ef;
+    color: #225a26;
+}
+
+.closed-status {
+    background: #f8e9e7;
+    color: #9a2d23;
+}
+
+.vendor-detail-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.vendor-detail-grid div {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #f8f9fa;
+    padding: 10px;
+}
+
+.vendor-detail-grid strong,
+.vendor-detail-grid span {
+    display: block;
+}
+
+.vendor-detail-grid strong {
+    margin-bottom: 4px;
+    font-size: 13px;
+}
+
+.vendor-detail-grid span {
+    color: var(--muted);
+    line-height: 1.4;
+}
+
 .shop-menu {
     display: grid;
     gap: 14px;
@@ -556,6 +612,15 @@ main {
     border-radius: 8px;
     background: #f8f9fa;
     padding: 12px;
+}
+
+.menu-item-link {
+    color: var(--text);
+    text-decoration: none;
+}
+
+.menu-item-link:hover {
+    color: var(--primary);
 }
 
 .menu-item h3 {
@@ -584,6 +649,123 @@ main {
     font-size: 13px;
     font-weight: 900;
     box-shadow: 0 8px 18px rgba(255, 107, 53, 0.2);
+}
+
+.menu-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+.dish-details-button {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    background: #fff7f2;
+    color: var(--primary);
+    padding: 0 13px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.dish-layout {
+    width: min(100%, 980px);
+    margin: 0 auto;
+    padding: 16px 16px 110px;
+}
+
+.dish-detail-card {
+    display: grid;
+    gap: 18px;
+}
+
+.dish-photo {
+    width: 100%;
+    max-height: 360px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #fff7f2;
+}
+
+.dish-copy h2 {
+    margin: 6px 0 8px;
+    font-size: 26px;
+    line-height: 1.1;
+}
+
+.dish-copy p {
+    margin: 0;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.dish-price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 16px 0;
+    border-radius: 8px;
+    background: #eef7ef;
+    color: #225a26;
+    padding: 12px;
+}
+
+.dish-price-row strong {
+    font-size: 22px;
+}
+
+.dish-info-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.dish-info-grid section,
+.dish-addons {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #f8f9fa;
+    padding: 12px;
+}
+
+.dish-info-grid h3,
+.dish-addons h3 {
+    margin: 0 0 10px;
+    font-size: 16px;
+}
+
+.dish-info-grid ul {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--muted);
+    line-height: 1.5;
+    font-weight: 700;
+}
+
+.dish-addons {
+    margin-top: 12px;
+}
+
+.addon-row {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    border-top: 1px solid var(--line);
+    font-weight: 900;
+}
+
+.addon-row:first-child {
+    border-top: 0;
+}
+
+.addon-row input {
+    accent-color: var(--secondary);
 }
 
 .empty-state {
@@ -1926,6 +2108,7 @@ main {
     .application-layout,
     .account-layout,
     .shop-layout,
+    .dish-layout,
     .tracking-layout {
         padding-left: 12px;
         padding-right: 12px;
@@ -2173,6 +2356,16 @@ main {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    .dish-detail-card {
+        grid-template-columns: minmax(0, 0.95fr) minmax(340px, 1.05fr);
+        align-items: start;
+    }
+
+    .dish-info-grid,
+    .vendor-detail-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .profile-card,
     .action-card {
         grid-column: 1 / -1;
@@ -2211,6 +2404,36 @@ main {
 
     .menu-add-button {
         width: 100%;
+    }
+
+    .menu-actions {
+        width: 100%;
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .dish-details-button,
+    .menu-add-button {
+        width: 100%;
+        min-height: 44px;
+    }
+
+    .vendor-title-row {
+        align-items: flex-start;
+    }
+
+    .vendor-logo {
+        width: 56px;
+        height: 56px;
+    }
+
+    .dish-copy h2 {
+        font-size: 22px;
+    }
+
+    .dish-price-row {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
     .header-topline {

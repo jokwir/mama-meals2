@@ -6,6 +6,16 @@ const usersStorageKey = "mamaMealsUsers";
 const orderStorageKey = "mamaMealsOrders";
 const partnerApplicationsStorageKey = "mamaMealsPartnerApplications";
 const passwordResetStorageKey = "mamaMealsPasswordResetRequests";
+const selectedLocationStorageKey = "mamaMealsSelectedLocation";
+
+const locationProfiles = {
+    "Nairobi, Kenya": { feeAdjust: 0, timeAdjust: 0 },
+    "Kilimani": { feeAdjust: 10, timeAdjust: 5 },
+    "Lavington": { feeAdjust: 20, timeAdjust: 8 },
+    "Westlands": { feeAdjust: 15, timeAdjust: 6 },
+    "Nairobi CBD": { feeAdjust: 0, timeAdjust: 3 },
+    "Current Location": { feeAdjust: 12, timeAdjust: 5 }
+};
 
 const vendorShops = {
     "bibis": {
@@ -142,6 +152,28 @@ function formatShillings(value) {
     return `KSh ${value.toLocaleString("en-KE")}`;
 }
 
+function getSelectedLocation() {
+    return localStorage.getItem(selectedLocationStorageKey) || "Nairobi, Kenya";
+}
+
+function saveSelectedLocation(location) {
+    localStorage.setItem(selectedLocationStorageKey, location || "Nairobi, Kenya");
+}
+
+function getLocationProfile(location = getSelectedLocation()) {
+    return locationProfiles[location] || { feeAdjust: 18, timeAdjust: 7 };
+}
+
+function getVendorDeliveryInfo(vendor, location = getSelectedLocation()) {
+    const profile = getLocationProfile(location);
+    const baseFee = Number(vendor.dataset.fee || 30);
+    const baseTime = Number(vendor.dataset.time || 35);
+    const fee = Math.max(0, baseFee + profile.feeAdjust);
+    const maxTime = Math.max(15, baseTime + profile.timeAdjust);
+    const minTime = Math.max(10, maxTime - 12);
+    return { fee, minTime, maxTime };
+}
+
 function slugify(value) {
     return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
@@ -180,6 +212,33 @@ function getDishDetails(item, shop) {
                 { name: "Kachumbari side", price: 90 }
             ]
     };
+}
+
+function getVendorSearchText(vendorId) {
+    const shop = vendorShops[vendorId];
+    if (!shop) {
+        return "";
+    }
+
+    return [
+        shop.name,
+        shop.description,
+        shop.about,
+        shop.serviceArea,
+        ...getShopMenuItems(shop).flatMap((item) => {
+            const details = getDishDetails(item, shop);
+            return [
+                item.name,
+                item.description,
+                item.category,
+                details.fullDescription,
+                details.portion,
+                ...details.ingredients,
+                ...details.options,
+                ...details.addOns.map((addOn) => addOn.name)
+            ];
+        })
+    ].join(" ").toLowerCase();
 }
 
 function findDish(vendorId, dishSlug) {
@@ -1147,7 +1206,13 @@ function initHomePage() {
     const promoTrack = document.querySelector("#promo-track");
     const promoDots = Array.from(document.querySelectorAll(".promo-dot"));
     const pickupFilter = document.querySelector("#filter-pickup");
+    const openNowFilter = document.querySelector("#filter-open-now");
     const offersFilter = document.querySelector("#filter-offers");
+    const cuisineFilter = document.querySelector("#filter-cuisine");
+    const minOrderFilter = document.querySelector("#filter-min-order");
+    const minOrderValue = document.querySelector("#filter-min-order-value");
+    const bestSellerFilter = document.querySelector("#filter-best-seller");
+    const fastDeliveryFilter = document.querySelector("#filter-fast-delivery");
     const feeFilter = document.querySelector("#filter-fee");
     const feeValue = document.querySelector("#filter-fee-value");
     const timeFilter = document.querySelector("#filter-time");
@@ -1155,6 +1220,12 @@ function initHomePage() {
     const ratingFilter = document.querySelector("#filter-rating");
     const priceFilter = document.querySelector("#filter-price");
     const sortFilter = document.querySelector("#filter-sort");
+    const locationButton = document.querySelector(".location-selector");
+    const locationPanel = document.querySelector("#location-panel");
+    const locationName = document.querySelector("#selected-location");
+    const locationSearch = document.querySelector("#location-search");
+    const saveLocationButton = document.querySelector("#save-location");
+    const currentLocationButton = document.querySelector("#use-current-location");
 
     if (!vendors.length) {
         return;
@@ -1162,6 +1233,48 @@ function initHomePage() {
 
     let activeCategory = "All";
     let promoIndex = 0;
+
+    function updateLocationDisplay() {
+        const location = getSelectedLocation();
+        if (locationName) {
+            locationName.textContent = location;
+        }
+        if (locationSearch) {
+            locationSearch.value = location === "Nairobi, Kenya" ? "" : location;
+        }
+    }
+
+    function updateVendorDeliveryMeta() {
+        const location = getSelectedLocation();
+        vendors.forEach((vendor) => {
+            const info = getVendorDeliveryInfo(vendor, location);
+            const timeMeta = vendor.querySelector("[data-delivery-time]");
+            const feeMeta = vendor.querySelector("[data-delivery-fee]");
+            if (timeMeta) {
+                timeMeta.textContent = `${info.minTime}-${info.maxTime} min`;
+            }
+            if (feeMeta) {
+                feeMeta.textContent = `${formatShillings(info.fee)} delivery`;
+            }
+            vendor.dataset.locationFee = String(info.fee);
+            vendor.dataset.locationTime = String(info.maxTime);
+        });
+    }
+
+    function setDeliveryLocation(location) {
+        const cleanLocation = (location || "").trim();
+        if (!cleanLocation) {
+            alert("Please enter an estate, street, or area name.");
+            return;
+        }
+        saveSelectedLocation(cleanLocation);
+        updateLocationDisplay();
+        updateVendorDeliveryMeta();
+        applyFilters();
+        if (locationPanel) {
+            locationPanel.hidden = true;
+        }
+    }
 
     function updateHomeCartBar(items = getCart(), latestName = "") {
         const { itemCount, total } = getCartTotals(items);
@@ -1174,8 +1287,13 @@ function initHomePage() {
     // Home search stays local for now; this can later call Firebase search indexes.
     function applyFilters() {
         const query = searchInput.value.trim().toLowerCase();
+        const openOnly = Boolean(openNowFilter?.checked);
         const pickupOnly = Boolean(pickupFilter?.checked);
         const offersOnly = Boolean(offersFilter?.checked);
+        const cuisine = cuisineFilter?.value || "all";
+        const maxMinimumOrder = Number(minOrderFilter?.value || 9999);
+        const bestSellerOnly = Boolean(bestSellerFilter?.checked);
+        const fastDeliveryOnly = Boolean(fastDeliveryFilter?.checked);
         const maxFee = Number(feeFilter?.value || 9999);
         const maxTime = Number(timeFilter?.value || 9999);
         const minRating = Number(ratingFilter?.value || 0);
@@ -1188,7 +1306,7 @@ function initHomePage() {
             }
 
             if (sortMode === "fastest") {
-                return Number(a.dataset.time || 9999) - Number(b.dataset.time || 9999);
+                return Number(a.dataset.locationTime || a.dataset.time || 9999) - Number(b.dataset.locationTime || b.dataset.time || 9999);
             }
 
             return vendors.indexOf(a) - vendors.indexOf(b);
@@ -1202,15 +1320,21 @@ function initHomePage() {
             const name = vendor.dataset.name.toLowerCase();
             const keywords = vendor.dataset.keywords.toLowerCase();
             const description = vendor.querySelector(".vendor-details p").textContent.toLowerCase();
-            const matchesSearch = !query || name.includes(query) || description.includes(query) || keywords.includes(query);
+            const menuSearchText = getVendorSearchText(vendor.dataset.vendorId);
+            const matchesSearch = !query || name.includes(query) || description.includes(query) || keywords.includes(query) || menuSearchText.includes(query);
             const matchesCategory = activeCategory === "All" || keywords.includes(activeCategory.toLowerCase());
+            const matchesCuisine = cuisine === "all" || vendor.dataset.cuisine === cuisine;
+            const matchesMinimumOrder = Number(vendor.dataset.minOrder || 0) <= maxMinimumOrder;
+            const matchesBestSeller = !bestSellerOnly || vendor.dataset.bestSeller === "true";
+            const matchesFastDelivery = !fastDeliveryOnly || vendor.dataset.fastDelivery === "true";
+            const matchesOpen = !openOnly || vendor.dataset.open === "true";
             const matchesPickup = !pickupOnly || vendor.dataset.pickup === "true";
             const matchesOffers = !offersOnly || vendor.dataset.offers === "true";
-            const matchesFee = Number(vendor.dataset.fee || 0) <= maxFee;
-            const matchesTime = Number(vendor.dataset.time || 0) <= maxTime;
+            const matchesFee = Number(vendor.dataset.locationFee || vendor.dataset.fee || 0) <= maxFee;
+            const matchesTime = Number(vendor.dataset.locationTime || vendor.dataset.time || 0) <= maxTime;
             const matchesRating = Number(vendor.dataset.rating || 0) >= minRating;
             const matchesPrice = Number(vendor.dataset.price || 0) <= maxPrice;
-            const isVisible = matchesSearch && matchesCategory && matchesPickup && matchesOffers && matchesFee && matchesTime && matchesRating && matchesPrice;
+            const isVisible = matchesSearch && matchesCategory && matchesCuisine && matchesMinimumOrder && matchesBestSeller && matchesFastDelivery && matchesOpen && matchesPickup && matchesOffers && matchesFee && matchesTime && matchesRating && matchesPrice;
 
             vendor.classList.toggle("hidden", !isVisible);
             if (isVisible) {
@@ -1226,6 +1350,9 @@ function initHomePage() {
         }
         if (timeValue && timeFilter) {
             timeValue.textContent = `Up to ${timeFilter.value} min`;
+        }
+        if (minOrderValue && minOrderFilter) {
+            minOrderValue.textContent = `Up to KSh ${minOrderFilter.value}`;
         }
     }
 
@@ -1274,9 +1401,45 @@ function initHomePage() {
         }
     });
 
-    [pickupFilter, offersFilter, feeFilter, timeFilter, ratingFilter, priceFilter, sortFilter].filter(Boolean).forEach((control) => {
+    [openNowFilter, pickupFilter, offersFilter, cuisineFilter, minOrderFilter, bestSellerFilter, fastDeliveryFilter, feeFilter, timeFilter, ratingFilter, priceFilter, sortFilter].filter(Boolean).forEach((control) => {
         control.addEventListener("input", applyFilters);
         control.addEventListener("change", applyFilters);
+    });
+
+    if (locationButton && locationPanel) {
+        locationButton.addEventListener("click", () => {
+            locationPanel.hidden = !locationPanel.hidden;
+            if (!locationPanel.hidden) {
+                locationSearch?.focus();
+            }
+        });
+    }
+
+    if (saveLocationButton) {
+        saveLocationButton.addEventListener("click", () => {
+            setDeliveryLocation(locationSearch?.value || "");
+        });
+    }
+
+    if (locationSearch) {
+        locationSearch.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+                event.preventDefault();
+                setDeliveryLocation(locationSearch.value);
+            }
+        });
+    }
+
+    if (currentLocationButton) {
+        currentLocationButton.addEventListener("click", () => {
+            setDeliveryLocation("Current Location");
+        });
+    }
+
+    document.querySelectorAll("[data-location-suggestion]").forEach((button) => {
+        button.addEventListener("click", () => {
+            setDeliveryLocation(button.dataset.locationSuggestion);
+        });
     });
 
     vendors.forEach((vendor) => {
@@ -1315,6 +1478,8 @@ function initHomePage() {
         showPromo((promoIndex + 1) % promoDots.length);
     }, 4500);
 
+    updateLocationDisplay();
+    updateVendorDeliveryMeta();
     applyFilters();
     updateHomeCartBar();
 }
@@ -1375,21 +1540,29 @@ function initShopPage() {
                 <span>${items.length} items</span>
             </div>
             <div class="menu-item-list">
-                ${items.map((item) => `
+                ${items.map((item) => {
+                    const itemDetails = getDishDetails({ ...item, category }, shop);
+                    return `
                     <article class="menu-item">
-                        <div>
-                            <a class="menu-item-link" href="dish.html?vendor=${encodeURIComponent(vendorId)}&dish=${encodeURIComponent(slugify(item.name))}">
-                                <h3>${item.name}</h3>
-                            </a>
-                            <p>${item.description}</p>
-                            <strong>${formatShillings(item.price)}</strong>
-                        </div>
-                        <div class="menu-actions">
-                            <a class="dish-details-button" href="dish.html?vendor=${encodeURIComponent(vendorId)}&dish=${encodeURIComponent(slugify(item.name))}">View Details</a>
-                            <button class="menu-add-button" type="button" data-name="${item.name}" data-price="${item.price}" data-image="${shop.image}">Add to Cart</button>
+                        <a class="menu-item-photo" href="dish.html?vendor=${encodeURIComponent(vendorId)}&dish=${encodeURIComponent(slugify(item.name))}" aria-label="View ${item.name}">
+                            <img src="${itemDetails.photo}" alt="${item.name}">
+                        </a>
+                        <div class="menu-item-copy">
+                            <div>
+                                <a class="menu-item-link" href="dish.html?vendor=${encodeURIComponent(vendorId)}&dish=${encodeURIComponent(slugify(item.name))}">
+                                    <h3>${item.name}</h3>
+                                </a>
+                                <p>${item.description}</p>
+                                <strong>${formatShillings(item.price)}</strong>
+                            </div>
+                            <div class="menu-actions">
+                                <a class="dish-details-button" href="dish.html?vendor=${encodeURIComponent(vendorId)}&dish=${encodeURIComponent(slugify(item.name))}">View Details</a>
+                                <button class="menu-add-button" type="button" data-name="${item.name}" data-price="${item.price}" data-image="${itemDetails.photo}">Add to Cart</button>
+                            </div>
                         </div>
                     </article>
-                `).join("")}
+                `;
+                }).join("")}
             </div>
         </section>
     `).join("");
@@ -1516,7 +1689,11 @@ function initCartPage() {
     const confirmationCopy = document.querySelector("#confirmation-copy");
     const trackOrderLink = document.querySelector("#track-order-link");
     const deliveryAddress = document.querySelector("#delivery-address");
+    const deliveryPhone = document.querySelector("#delivery-phone");
+    const specialInstructions = document.querySelector("#special-instructions");
+    const orderNotes = document.querySelector("#order-notes");
     const useTestAddressButton = document.querySelector("#use-test-address");
+    const useSavedAddressButton = document.querySelector("#use-saved-address");
     const paymentOptions = Array.from(document.querySelectorAll(".payment-option"));
 
     if (!checkoutItems) {
@@ -1542,6 +1719,7 @@ function initCartPage() {
                         <span>${item.quantity}</span>
                         <button type="button" data-action="increase" data-name="${item.name}">+</button>
                     </div>
+                    <button class="remove-cart-item" type="button" data-action="remove" data-name="${item.name}">Remove</button>
                 </div>
                 <strong>${formatShillings(item.price * item.quantity)}</strong>
             `;
@@ -1562,8 +1740,12 @@ function initCartPage() {
             return;
         }
 
-        const change = button.dataset.action === "increase" ? 1 : -1;
-        updateItemQuantity(button.dataset.name, change);
+        if (button.dataset.action === "remove") {
+            saveCart(getCart().filter((item) => item.name !== button.dataset.name));
+        } else {
+            const change = button.dataset.action === "increase" ? 1 : -1;
+            updateItemQuantity(button.dataset.name, change);
+        }
         renderCart();
     });
 
@@ -1582,6 +1764,21 @@ function initCartPage() {
         });
     }
 
+    if (useSavedAddressButton) {
+        useSavedAddressButton.addEventListener("click", () => {
+            const profile = getActiveProfile();
+            const savedAddress = profile?.addresses?.[0] || profile?.location || getSelectedLocation();
+            const savedPhone = profile?.phone || "";
+            deliveryAddress.value = savedAddress;
+            if (deliveryPhone && savedPhone) {
+                deliveryPhone.value = savedPhone;
+            }
+            deliveryAddress.classList.remove("field-error");
+            deliveryPhone?.classList.remove("field-error");
+            deliveryAddress.focus();
+        });
+    }
+
     placeOrderButton.addEventListener("click", () => {
         const items = getCart();
         if (!items.length) {
@@ -1589,6 +1786,7 @@ function initCartPage() {
         }
 
         const trimmedAddress = deliveryAddress.value.trim();
+        const trimmedPhone = deliveryPhone?.value.trim() || "";
 
         if (!hasActiveAccount()) {
             alert("Please create an account or log in before placing an order.");
@@ -1604,6 +1802,15 @@ function initCartPage() {
         }
 
         deliveryAddress.classList.remove("field-error");
+
+        if (trimmedPhone.length < 7) {
+            deliveryPhone?.focus();
+            deliveryPhone?.classList.add("field-error");
+            alert("Please confirm a delivery phone number so the rider can reach you.");
+            return;
+        }
+
+        deliveryPhone?.classList.remove("field-error");
         const paymentMethod = document.querySelector("input[name='payment-method']:checked").value;
         confirmationCopy.textContent = "✅ Order placed successfully! You can view it in your Order History";
         confirmationScreen.classList.add("visible");
@@ -1617,6 +1824,9 @@ function initCartPage() {
             timestamp: now.toISOString(),
             status: "🟡 Order Received – Preparing Soon",
             deliveryAddress: trimmedAddress,
+            deliveryPhone: trimmedPhone,
+            deliveryInstructions: specialInstructions?.value.trim() || "",
+            orderNotes: orderNotes?.value.trim() || "",
             paymentMethod,
             subtotal,
             deliveryFee,

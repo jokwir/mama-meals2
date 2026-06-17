@@ -42,10 +42,19 @@
             <label class="field-label" for="delivery-address">Delivery address</label>
             <input class="text-field" id="delivery-address" type="text" placeholder="Example: House 45, Mumias Road, Lavington Estate — near Lavington Shopping Centre">
             <p class="support-copy">Tip: Include house number, street, estate or landmark so the rider finds you easily</p>
-            <button class="text-action address-fill-button" id="use-test-address" type="button">Use test address</button>
+            <div class="checkout-helper-actions">
+                <button class="text-action address-fill-button" id="use-test-address" type="button">Use test address</button>
+                <button class="text-action address-fill-button" id="use-saved-address" type="button">Use saved address</button>
+            </div>
 
-            <label class="field-label" for="special-instructions">Special instructions</label>
-            <textarea class="text-field textarea-field" id="special-instructions" placeholder="Any delivery notes or food requests?"></textarea>
+            <label class="field-label" for="delivery-phone">Confirm delivery phone number</label>
+            <input class="text-field" id="delivery-phone" type="tel" placeholder="Example: +254 700 000 000">
+
+            <label class="field-label" for="special-instructions">Delivery instructions</label>
+            <textarea class="text-field textarea-field" id="special-instructions" placeholder="Gate code, rider directions, house color, or landmark notes"></textarea>
+
+            <label class="field-label" for="order-notes">Order notes</label>
+            <textarea class="text-field textarea-field compact-textarea" id="order-notes" placeholder="Food preferences, allergies, or packing requests"></textarea>
 
             <fieldset class="payment-options">
                 <legend>Payment option</legend>
@@ -54,27 +63,6 @@
                     <span>
                         <strong><span class="payment-icon payment-icon-mpesa" aria-hidden="true">M</span>M-Pesa</strong>
                         <small>Recommended primary payment method</small>
-                    </span>
-                </label>
-                <label class="payment-option">
-                    <input type="radio" name="payment-method" value="Google Pay">
-                    <span>
-                        <strong><span class="payment-icon payment-icon-google" aria-hidden="true">G</span>Google Pay</strong>
-                        <small>Placeholder for Google Pay gateway</small>
-                    </span>
-                </label>
-                <label class="payment-option">
-                    <input type="radio" name="payment-method" value="Apple Pay">
-                    <span>
-                        <strong><span class="payment-icon payment-icon-apple" aria-hidden="true">A</span>Apple Pay</strong>
-                        <small>Placeholder for Apple Pay gateway</small>
-                    </span>
-                </label>
-                <label class="payment-option">
-                    <input type="radio" name="payment-method" value="Credit / Debit Card">
-                    <span>
-                        <strong><span class="payment-icon payment-icon-card" aria-hidden="true">CARD</span>Credit / Debit Card</strong>
-                        <small>Placeholder for card payments</small>
                     </span>
                 </label>
                 <label class="payment-option">

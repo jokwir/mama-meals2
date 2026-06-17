@@ -134,6 +134,46 @@ textarea {
     white-space: nowrap;
 }
 
+.auth-session-nav {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    min-width: 0;
+}
+
+.auth-greeting,
+.auth-account-link,
+.auth-logout-button {
+    min-height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 0 12px;
+    font-size: 13px;
+    font-weight: 900;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.auth-greeting {
+    color: var(--primary);
+    background: #fff7f2;
+}
+
+.auth-account-link {
+    color: #225a26;
+    background: #eef7ef;
+}
+
+.auth-logout-button {
+    border: 0;
+    background: #263029;
+    color: #fff;
+}
+
 .notification-button {
     flex: 0 0 auto;
     width: 40px;
@@ -2263,6 +2303,23 @@ main {
         font-size: 12px;
     }
 
+    .auth-session-nav {
+        flex: 1 1 100%;
+        width: 100%;
+        justify-content: space-between;
+        gap: 6px;
+    }
+
+    .auth-greeting,
+    .auth-account-link,
+    .auth-logout-button {
+        min-height: 42px;
+        flex: 1 1 0;
+        padding: 0 8px;
+        font-size: 12px;
+        text-align: center;
+    }
+
     .search-box {
         min-height: 50px;
         border-radius: 18px;
@@ -2669,6 +2726,12 @@ main {
         white-space: normal;
         text-align: center;
         line-height: 1.1;
+    }
+
+    .auth-greeting,
+    .auth-account-link,
+    .auth-logout-button {
+        font-size: 11px;
     }
 
     .checkout-item {

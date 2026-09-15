@@ -1954,3 +1954,455 @@ initPersistentAuthNavigation();
 initGlobalFeedback();
 initOrderHistoryPage();
 initOrderTrackingPage();
+
+const imageUploadRules = {
+    allowedTypes: ["image/jpeg", "image/png", "image/webp"],
+    maxBytes: 2 * 1024 * 1024,
+    minWidth: 800,
+    minHeight: 600,
+    aspectRatios: [
+        { label: "1:1", value: 1 },
+        { label: "4:3", value: 4 / 3 }
+    ]
+};
+
+const vendorMenuStorageKey = "mamaMealsVendorMenuItems";
+const riderProfileStorageKey = "mamaMealsRiderProfile";
+
+function getRoleList(profile) {
+    return profile?.roles || [profile?.role || "customer"];
+}
+
+function profileCanAccess(role) {
+    const profile = getActiveProfile();
+    if (!profile) {
+        return false;
+    }
+
+    if (role === "customer") {
+        return true;
+    }
+
+    return getRoleList(profile).includes(role) || getRoleList(profile).includes("admin");
+}
+
+function renderAccessDenied(roleLabel) {
+    const target = document.querySelector("main") || document.body;
+    target.innerHTML = `
+        <section class="account-layout auth-layout">
+            <article class="account-card access-denied-card">
+                <h2>Access Denied</h2>
+                <p class="support-copy">This page is only available to approved ${roleLabel} accounts.</p>
+                <a class="account-row-link" href="account.html">Go to My Account</a>
+                <a class="secondary-link" href="index.html">Back to Home</a>
+            </article>
+        </section>
+    `;
+}
+
+function getStoredVendorMenu() {
+    try {
+        return JSON.parse(localStorage.getItem(vendorMenuStorageKey)) || [];
+    } catch {
+        return [];
+    }
+}
+
+function saveStoredVendorMenu(items) {
+    localStorage.setItem(vendorMenuStorageKey, JSON.stringify(items));
+}
+
+function getStoredRiderProfile() {
+    try {
+        return JSON.parse(localStorage.getItem(riderProfileStorageKey)) || {};
+    } catch {
+        return {};
+    }
+}
+
+function saveStoredRiderProfile(profile) {
+    localStorage.setItem(riderProfileStorageKey, JSON.stringify(profile));
+}
+
+function getImageUploadNote(uploadType = "food") {
+    const specific = uploadType === "rider"
+        ? "Rider uploads must show the full ID clearly, plus a vehicle photo where the registration plate is readable."
+        : "Food uploads must show a clear dish, no clutter, no text, no logos, no watermarks, and no blurry photos.";
+
+    return `${specific} JPG, PNG, or WebP only. Max 2MB. Minimum 800x600px. Use 1:1 or 4:3 only.`;
+}
+
+function readImageFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const img = new Image();
+            img.onload = () => resolve({ dataUrl: reader.result, width: img.width, height: img.height });
+            img.onerror = () => reject(new Error("We could not read this image. Please choose another JPG, PNG, or WebP file."));
+            img.src = reader.result;
+        };
+        reader.onerror = () => reject(new Error("We could not read this file. Please try again."));
+        reader.readAsDataURL(file);
+    });
+}
+
+function aspectRatioIsAllowed(width, height) {
+    const ratio = width / height;
+    return imageUploadRules.aspectRatios.some((allowed) => Math.abs(ratio - allowed.value) < 0.04);
+}
+
+async function validateDashboardImage(input, uploadType, confirmInput, messageElement, previewElement) {
+    const file = input.files?.[0];
+    if (!file) {
+        return null;
+    }
+
+    function showUploadError(text) {
+        if (messageElement) {
+            messageElement.textContent = text;
+            messageElement.hidden = false;
+            messageElement.classList.add("error");
+        }
+        input.value = "";
+        if (previewElement) {
+            previewElement.innerHTML = "";
+        }
+    }
+
+    if (!imageUploadRules.allowedTypes.includes(file.type)) {
+        showUploadError("Please upload a JPG, PNG, or WebP image only.");
+        return null;
+    }
+
+    if (file.size > imageUploadRules.maxBytes) {
+        showUploadError("Image is too large. Please upload an image under 2MB.");
+        return null;
+    }
+
+    try {
+        const image = await readImageFile(file);
+
+        if (image.width < imageUploadRules.minWidth || image.height < imageUploadRules.minHeight) {
+            showUploadError("Image resolution is too small. Minimum size is 800x600px.");
+            return null;
+        }
+
+        if (!aspectRatioIsAllowed(image.width, image.height)) {
+            showUploadError("Image must be either square 1:1 or landscape 4:3.");
+            return null;
+        }
+
+        if (confirmInput && !confirmInput.checked) {
+            showUploadError(uploadType === "rider"
+                ? "Please confirm the ID and registration plate are fully visible before uploading."
+                : "Please confirm the food photo has no watermark, logo, text, clutter, or blur.");
+            return null;
+        }
+
+        if (messageElement) {
+            messageElement.textContent = "Image looks good.";
+            messageElement.hidden = false;
+            messageElement.classList.remove("error");
+        }
+        if (previewElement) {
+            previewElement.innerHTML = `<img src="${image.dataUrl}" alt="Selected upload preview">`;
+        }
+        return image;
+    } catch (error) {
+        showUploadError(error.message);
+        return null;
+    }
+}
+
+function imageUploadBlock({ id, label, type = "food" }) {
+    return `
+        <div class="dashboard-upload" data-upload-block="${id}">
+            <p class="upload-rules-note">${getImageUploadNote(type)}</p>
+            <label class="field-label" for="${id}">${label}</label>
+            <input class="text-field dashboard-file-input" id="${id}" type="file" accept="image/jpeg,image/png,image/webp">
+            <label class="checkbox-row upload-confirm-row">
+                <input type="checkbox" id="${id}-confirm">
+                <span>${type === "rider" ? "I confirm the ID/plate is fully visible and the image is clear." : "I confirm this photo is clear, uncluttered, and has no text, logo, watermark, or blur."}</span>
+            </label>
+            <p class="auth-message upload-message" id="${id}-message" hidden></p>
+            <div class="upload-preview" id="${id}-preview"></div>
+        </div>
+    `;
+}
+
+function setupUploadValidation(root = document) {
+    root.querySelectorAll("[data-upload-block]").forEach((block) => {
+        const id = block.dataset.uploadBlock;
+        const input = block.querySelector(`#${CSS.escape(id)}`);
+        const confirm = block.querySelector(`#${CSS.escape(id)}-confirm`);
+        const message = block.querySelector(`#${CSS.escape(id)}-message`);
+        const preview = block.querySelector(`#${CSS.escape(id)}-preview`);
+        const type = id.includes("rider") || id.includes("vehicle") ? "rider" : "food";
+
+        input?.addEventListener("change", () => {
+            validateDashboardImage(input, type, confirm, message, preview);
+        });
+    });
+}
+
+function initCustomerDashboardPhase() {
+    const accountLayout = document.querySelector(".account-layout");
+    if (!accountLayout || !window.location.pathname.endsWith("account.html") || !profileCanAccess("customer")) {
+        return;
+    }
+
+    if (document.querySelector(".customer-dashboard-phase")) {
+        return;
+    }
+
+    const profile = getActiveProfile();
+    const panel = document.createElement("article");
+    panel.className = "account-card customer-dashboard-phase";
+    panel.innerHTML = `
+        <div class="account-card-heading">
+            <h2>Customer Dashboard</h2>
+            <span class="status-badge status-delivered">Active</span>
+        </div>
+        <div class="role-action-grid">
+            <a class="role-action-card" href="index.html"><strong>Browse food</strong><span>Find vendors, dishes, drinks, and offers.</span></a>
+            <a class="role-action-card" href="cart.html"><strong>Order checkout</strong><span>Review cart, delivery address, and payment.</span></a>
+            <button class="role-action-card" type="button" data-open-location><strong>Change location</strong><span>${getSelectedLocation()}</span></button>
+            <a class="role-action-card" href="account.html#profile"><strong>Edit details</strong><span>${profile?.phone || "Update your phone and address"}</span></a>
+            <button class="role-action-card danger-action" type="button" data-phase-logout><strong>Log out</strong><span>End this session safely.</span></button>
+        </div>
+    `;
+    accountLayout.prepend(panel);
+    panel.querySelector("[data-open-location]")?.addEventListener("click", () => {
+        window.location.href = "index.html";
+    });
+    panel.querySelector("[data-phase-logout]")?.addEventListener("click", () => {
+        clearActiveAccount();
+        window.location.href = "index.html";
+    });
+}
+
+function initVendorDashboardPhase() {
+    if (!window.location.pathname.endsWith("vendor-dashboard.html")) {
+        return;
+    }
+
+    if (!profileCanAccess("vendor")) {
+        renderAccessDenied("vendor");
+        return;
+    }
+
+    const target = document.querySelector("main") || document.body;
+    target.innerHTML = `
+        <section class="dashboard-shell vendor-dashboard">
+            <article class="account-card dashboard-hero-panel">
+                <div>
+                    <span class="location-kicker">Vendor Workspace</span>
+                    <h2>My Vendor Dashboard</h2>
+                    <p class="support-copy">Add menu items, manage photos and prices, view incoming orders, and keep your kitchen profile updated.</p>
+                </div>
+                <button class="logout-button" type="button" data-phase-logout>Log Out</button>
+            </article>
+            <article class="account-card">
+                <h2>My Menu</h2>
+                <form class="dashboard-form" id="vendor-menu-form">
+                    ${imageUploadBlock({ id: "vendor-food-upload", label: "Menu item photo", type: "food" })}
+                    <label class="field-label">Item name<input class="text-field" name="itemName" required placeholder="Example: Chicken Pilau"></label>
+                    <label class="field-label">Price<input class="text-field" name="price" required type="number" min="1" placeholder="450"></label>
+                    <label class="field-label">Category<select class="text-field" name="category"><option>Main Meals</option><option>Sides</option><option>Drinks</option><option>Snacks</option></select></label>
+                    <button class="place-order-button" type="submit">Add Menu Item</button>
+                    <p class="auth-message" data-menu-message hidden></p>
+                </form>
+                <div class="dashboard-list" id="vendor-menu-list"></div>
+            </article>
+            <article class="account-card">
+                <h2>My Orders</h2>
+                <div class="dashboard-list" id="vendor-order-list"></div>
+            </article>
+            <article class="account-card">
+                <h2>Profile Settings</h2>
+                <label class="field-label">Kitchen name<input class="text-field" value="Mama Meals Partner Kitchen"></label>
+                <label class="field-label">Service area<input class="text-field" value="${getSelectedLocation()}"></label>
+                <button class="secondary-link" type="button">Save Profile</button>
+            </article>
+        </section>
+    `;
+
+    setupUploadValidation(target);
+
+    const form = document.querySelector("#vendor-menu-form");
+    const list = document.querySelector("#vendor-menu-list");
+    const orders = document.querySelector("#vendor-order-list");
+    const message = form?.querySelector("[data-menu-message]");
+
+    function renderMenu() {
+        const items = getStoredVendorMenu();
+        list.innerHTML = items.length ? items.map((item) => `
+            <article class="dashboard-list-item">
+                <img src="${item.image}" alt="${item.name}">
+                <div><strong>${item.name}</strong><span>${item.category} - ${formatShillings(item.price)}</span></div>
+                <button type="button" data-delete-menu="${item.id}">Delete</button>
+            </article>
+        `).join("") : `<p class="empty-state visible">No menu items yet. Add your first dish above.</p>`;
+    }
+
+    function renderOrders() {
+        const orderList = getOrders().slice(0, 6);
+        orders.innerHTML = orderList.length ? orderList.map((order) => `
+            <article class="dashboard-list-item">
+                <div><strong>${order.id}</strong><span>${order.items.length} items - ${formatShillings(order.total)} - ${order.status}</span></div>
+                <a class="text-action" href="order-history.html">View</a>
+            </article>
+        `).join("") : `<p class="empty-state visible">No incoming orders yet.</p>`;
+    }
+
+    form?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const upload = document.querySelector("#vendor-food-upload");
+        const confirm = document.querySelector("#vendor-food-upload-confirm");
+        const uploadMessage = document.querySelector("#vendor-food-upload-message");
+        const preview = document.querySelector("#vendor-food-upload-preview");
+        const image = await validateDashboardImage(upload, "food", confirm, uploadMessage, preview);
+        if (!image) {
+            return;
+        }
+
+        const item = {
+            id: `menu-${Date.now()}`,
+            name: form.elements.itemName.value.trim(),
+            price: Number(form.elements.price.value),
+            category: form.elements.category.value,
+            image: image.dataUrl
+        };
+        saveStoredVendorMenu([item, ...getStoredVendorMenu()]);
+        form.reset();
+        preview.innerHTML = "";
+        if (message) {
+            message.textContent = "Menu item added.";
+            message.hidden = false;
+            message.classList.remove("error");
+        }
+        renderMenu();
+    });
+
+    list?.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-delete-menu]");
+        if (!button) {
+            return;
+        }
+        saveStoredVendorMenu(getStoredVendorMenu().filter((item) => item.id !== button.dataset.deleteMenu));
+        renderMenu();
+    });
+
+    target.querySelector("[data-phase-logout]")?.addEventListener("click", () => {
+        clearActiveAccount();
+        window.location.href = "index.html";
+    });
+
+    renderMenu();
+    renderOrders();
+}
+
+function initRiderDashboardPhase() {
+    if (!window.location.pathname.endsWith("rider-dashboard.html")) {
+        return;
+    }
+
+    if (!profileCanAccess("rider")) {
+        renderAccessDenied("rider");
+        return;
+    }
+
+    const rider = getStoredRiderProfile();
+    const target = document.querySelector("main") || document.body;
+    target.innerHTML = `
+        <section class="dashboard-shell rider-dashboard">
+            <article class="account-card dashboard-hero-panel">
+                <div>
+                    <span class="location-kicker">Rider Workspace</span>
+                    <h2>My Rider Dashboard</h2>
+                    <p class="support-copy">Upload verification photos, set availability, view delivery work, and manage rider details.</p>
+                </div>
+                <button class="logout-button" type="button" data-phase-logout>Log Out</button>
+            </article>
+            <article class="account-card">
+                <h2>Verification Uploads</h2>
+                <form class="dashboard-form" id="rider-profile-form">
+                    ${imageUploadBlock({ id: "rider-id-upload", label: "Full ID photo", type: "rider" })}
+                    ${imageUploadBlock({ id: "rider-vehicle-upload", label: "Vehicle and plate photo", type: "rider" })}
+                    <label class="field-label">Registration plate<input class="text-field" name="plate" required value="${rider.plate || ""}" placeholder="Example: KDA 123A"></label>
+                    <label class="settings-row"><span>Available for deliveries</span><input type="checkbox" name="available" ${rider.available ? "checked" : ""}></label>
+                    <button class="place-order-button" type="submit">Save Rider Details</button>
+                    <p class="auth-message" data-rider-message hidden></p>
+                </form>
+            </article>
+            <article class="account-card">
+                <h2>Available Deliveries</h2>
+                <div class="dashboard-list" id="rider-delivery-list"></div>
+            </article>
+            <article class="account-card">
+                <h2>Profile Settings</h2>
+                <p class="support-copy">Current status: <strong>${rider.available ? "Available" : "Unavailable"}</strong></p>
+                <a class="secondary-link" href="account.html">Edit account details</a>
+            </article>
+        </section>
+    `;
+
+    setupUploadValidation(target);
+
+    const form = document.querySelector("#rider-profile-form");
+    const deliveries = document.querySelector("#rider-delivery-list");
+    deliveries.innerHTML = getOrders().slice(0, 6).map((order) => `
+        <article class="dashboard-list-item">
+            <div><strong>${order.id}</strong><span>${order.deliveryAddress || "Delivery address pending"} - ${formatShillings(order.total)}</span></div>
+            <a class="text-action" href="order-tracking.html?order=${encodeURIComponent(order.id)}">Track</a>
+        </article>
+    `).join("") || `<p class="empty-state visible">No deliveries available yet.</p>`;
+
+    form?.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const idImage = await validateDashboardImage(
+            document.querySelector("#rider-id-upload"),
+            "rider",
+            document.querySelector("#rider-id-upload-confirm"),
+            document.querySelector("#rider-id-upload-message"),
+            document.querySelector("#rider-id-upload-preview")
+        );
+        const vehicleImage = await validateDashboardImage(
+            document.querySelector("#rider-vehicle-upload"),
+            "rider",
+            document.querySelector("#rider-vehicle-upload-confirm"),
+            document.querySelector("#rider-vehicle-upload-message"),
+            document.querySelector("#rider-vehicle-upload-preview")
+        );
+        if (!idImage || !vehicleImage) {
+            return;
+        }
+
+        saveStoredRiderProfile({
+            plate: form.elements.plate.value.trim(),
+            available: form.elements.available.checked,
+            idImage: idImage.dataUrl,
+            vehicleImage: vehicleImage.dataUrl,
+            updatedAt: new Date().toISOString()
+        });
+        const message = form.querySelector("[data-rider-message]");
+        if (message) {
+            message.textContent = "Rider details saved.";
+            message.hidden = false;
+            message.classList.remove("error");
+        }
+    });
+
+    target.querySelector("[data-phase-logout]")?.addEventListener("click", () => {
+        clearActiveAccount();
+        window.location.href = "index.html";
+    });
+}
+
+function initRoleDashboardPhase() {
+    initCustomerDashboardPhase();
+    initVendorDashboardPhase();
+    initRiderDashboardPhase();
+}
+
+initRoleDashboardPhase();

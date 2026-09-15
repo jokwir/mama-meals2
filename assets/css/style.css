@@ -704,7 +704,7 @@ main {
     gap: 14px;
 }
 
-.shop-hero img {
+.shop-hero > img {
     width: 100%;
     max-height: 280px;
     border-radius: 8px;
@@ -2247,6 +2247,176 @@ main {
     line-height: 1.25;
 }
 
+.dashboard-shell {
+    display: grid;
+    gap: 16px;
+    width: min(100%, 980px);
+    margin: 0 auto;
+    padding: 16px 16px 110px;
+}
+
+.dashboard-hero-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.dashboard-hero-panel h2 {
+    margin: 4px 0 6px;
+    font-size: 24px;
+}
+
+.role-action-grid {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.role-action-card {
+    width: 100%;
+    min-height: 72px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #f8f9fa;
+    color: var(--text);
+    display: grid;
+    gap: 5px;
+    padding: 12px;
+    text-align: left;
+    text-decoration: none;
+}
+
+.role-action-card strong {
+    color: var(--text);
+    font-size: 15px;
+}
+
+.role-action-card span {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.role-action-card:hover {
+    border-color: rgba(255, 107, 53, 0.35);
+    background: #fff7f2;
+}
+
+.danger-action {
+    border: 0;
+    background: #263029;
+}
+
+.danger-action strong,
+.danger-action span {
+    color: #fff;
+}
+
+.dashboard-form {
+    display: grid;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.dashboard-upload {
+    display: grid;
+    gap: 8px;
+    border: 1px dashed rgba(255, 107, 53, 0.45);
+    border-radius: 8px;
+    background: #fff7f2;
+    padding: 12px;
+}
+
+.upload-rules-note {
+    margin: 0;
+    color: #713817;
+    font-size: 13px;
+    font-weight: 900;
+    line-height: 1.35;
+}
+
+.dashboard-file-input {
+    padding: 11px;
+    background: #fff;
+}
+
+.upload-confirm-row {
+    margin: 0;
+}
+
+.upload-message {
+    margin: 0;
+}
+
+.upload-preview {
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.upload-preview img {
+    width: 100%;
+    max-height: 220px;
+    display: block;
+    object-fit: cover;
+    background: #fff;
+}
+
+.dashboard-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.dashboard-list-item {
+    display: grid;
+    grid-template-columns: 64px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #f8f9fa;
+    padding: 10px;
+}
+
+.dashboard-list-item:not(:has(img)) {
+    grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.dashboard-list-item img {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    object-fit: cover;
+    background: #fff7f2;
+}
+
+.dashboard-list-item strong,
+.dashboard-list-item span {
+    display: block;
+}
+
+.dashboard-list-item span {
+    margin-top: 3px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.dashboard-list-item button {
+    border: 0;
+    border-radius: 999px;
+    background: #f8e9e7;
+    color: #9a2d23;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-weight: 900;
+}
+
+.access-denied-card {
+    text-align: center;
+}
+
 @media (max-width: 640px) {
     body,
     .checkout-page,
@@ -2558,6 +2728,38 @@ main {
     .map-placeholder {
         min-height: 210px;
     }
+
+    .dashboard-shell {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+
+    .dashboard-hero-panel {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .dashboard-list-item,
+    .dashboard-list-item:not(:has(img)) {
+        grid-template-columns: 56px minmax(0, 1fr);
+        align-items: start;
+    }
+
+    .dashboard-list-item:not(:has(img)) {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-list-item img {
+        width: 56px;
+        height: 56px;
+    }
+
+    .dashboard-list-item button,
+    .dashboard-list-item .text-action {
+        grid-column: 1 / -1;
+        width: 100%;
+        text-align: center;
+    }
 }
 
 @media (min-width: 720px) {
@@ -2635,6 +2837,18 @@ main {
 
     .profile-card,
     .action-card {
+        grid-column: 1 / -1;
+    }
+
+    .role-action-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .dashboard-shell {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .dashboard-hero-panel {
         grid-column: 1 / -1;
     }
 }

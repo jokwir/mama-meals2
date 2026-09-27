@@ -22,10 +22,10 @@
             <a class="secondary-link" href="login.html">Log In</a>
         </section>
 
-        <section class="account-card profile-card account-content" hidden>
+        <section class="account-card profile-card account-content" id="profile" hidden>
             <div class="account-card-heading">
                 <h2>Profile Information</h2>
-                <button class="text-action" type="button" data-placeholder-alert="Profile editing will save to the customer database later.">Edit</button>
+                <button class="text-action" type="button" id="save-profile">Save Details</button>
             </div>
             <div class="profile-grid">
                 <label class="field-label" for="profile-name">Name</label>
@@ -42,7 +42,7 @@
             </div>
             <div class="verification-row">
                 <p class="support-copy" id="email-verification-status"></p>
-                <button class="text-action" type="button" id="verify-email-button" hidden>Mark Email Verified</button>
+                <button class="text-action" type="button" id="verify-email-button" hidden>Resend Verification Email</button>
             </div>
         </section>
 
@@ -51,6 +51,14 @@
                 <h2>Saved Delivery Addresses</h2>
                 <button class="text-action" type="button" id="add-address">Add New</button>
             </div>
+            <form class="inline-editor" id="address-editor" hidden>
+                <label class="field-label" for="address-editor-input">Delivery address</label>
+                <input class="text-field" id="address-editor-input" type="text" minlength="10" placeholder="House, street, estate, or landmark" required>
+                <div class="inline-editor-actions">
+                    <button class="text-action" type="submit">Save Address</button>
+                    <button class="text-action muted-action" id="cancel-address-edit" type="button">Cancel</button>
+                </div>
+            </form>
             <div class="address-list" id="address-list"></div>
         </section>
 
@@ -110,6 +118,8 @@
             <div class="account-card-heading">
                 <h2>Join Our Team</h2>
             </div>
+            <p class="support-copy">Apply once, follow the review here, and unlock the right workspace after approval.</p>
+            <div class="application-status-list" id="application-status-list"></div>
             <div class="dashboard-links" id="partner-dashboard-links"></div>
             <div class="get-started-grid account-team-grid">
                 <a class="get-started-button partner-button" href="apply-cook.html">
@@ -156,6 +166,8 @@
         <a class="nav-item active" href="account.html" aria-label="Account" aria-current="page"><span class="nav-icon" aria-hidden="true">&#9675;</span></a>
     </nav>
 
-    <script src="assets/js/app.min.js"></script>
+    <script defer src="assets/js/firebase-config.js"></script>
+    <script defer src="assets/js/firebase-client.min.js"></script>
+    <script defer src="assets/js/app.min.js"></script>
 </body>
 </html>

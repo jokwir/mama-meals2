@@ -1,0 +1,13 @@
+node_modules/
+functions/node_modules/
+.firebase/
+.env
+.env.*
+!.env.example
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+*.local
+dist/assets/js/firebase-config.js
+service-account*.json
+firebase-adminsdk-*.json

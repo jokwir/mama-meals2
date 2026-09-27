@@ -1,6 +1,6 @@
-// Firebase Web SDK placeholder for Mama Meals.
-// Replace these values when the live Firebase project is created.
-// This file is intentionally not imported by the current static prototype.
+// Documentation-only Firebase Web SDK example for Mama Meals.
+// The build creates dist/assets/js/firebase-config.js from Netlify environment values.
+// This file is never imported or copied to the production build.
 
 export const firebaseConfig = {
   apiKey: "YOUR_FIREBASE_API_KEY",
@@ -17,7 +17,6 @@ export const firebaseCollections = {
   riders: "riders",
   orders: "orders",
   menuItems: "menuItems",
-  vendorApplications: "vendorApplications",
-  riderApplications: "riderApplications",
-  adminSettings: "adminSettings"
+  applications: "applications",
+  systemCounters: "systemCounters"
 };

@@ -1,34 +1,31 @@
-# Authentication And Roles Plan
+# Firebase Authentication And Roles
 
-This is a planning document. Firebase Authentication itself is configured in the Firebase Console or with infrastructure scripts later.
+Firebase Authentication email/password is the only account provider used by the current web app. Enable it in the Firebase Console and configure the authorized Netlify production domain.
 
-## Providers
+## Session Rules
 
-- Phone number authentication for customer OTP login.
-- Email/password for admin, vendor, and rider management.
-- Optional Google sign-in for customers later.
+- Firebase browser persistence keeps the signed-in session across reloads.
+- New accounts receive a Firebase verification email.
+- Email verification is required before partner applications and order creation.
+- Password reset email is sent by Firebase Authentication.
+- No password or account session is stored in application `localStorage`.
 
-## User Roles
+## Role Claims
 
-Store the user role in `users/{uid}.role`.
+Protected roles are Firebase Auth custom claims:
 
-- `customer`: can manage their account and create/read their own orders.
-- `vendor`: approved cook/vendor account, can manage their vendor profile and menu items.
-- `rider`: approved delivery rider, can view assigned deliveries and update delivery status.
-- `admin`: can approve applications, manage users, view orders, and edit platform settings.
+- `admin`: access to admin reads and the application approval callable
+- `vendor`: access to the vendor dashboard, vendor-owned menu/profile data, and vendor order actions
+- `rider`: access to the rider dashboard, approved rider profile, available deliveries, and assigned delivery actions
+
+Every signed-in account is treated as a customer. The callable backend also keeps a display-only `roles` array in `users/{uid}`; Firestore rules and callable functions trust custom claims, not that array.
 
 ## Approval Flow
 
-1. User submits `vendorApplications` or `riderApplications`.
-2. Admin reviews the application.
-3. Admin updates application status to `approved`.
-4. Backend/Cloud Function creates or updates the matching `vendors` or `riders` document.
-5. Backend/Cloud Function updates `users/{uid}.role`.
+1. A verified user uploads required files to their own protected Storage path.
+2. `submitPartnerApplication` validates ownership, type, size, dimensions, aspect ratio, and application fields before creating a pending Firestore record.
+3. An admin custom claim is required to call `reviewPartnerApplication`.
+4. Approval sets the vendor or rider custom claim through the Admin SDK and creates the corresponding approved partner document.
+5. The user's client refreshes its ID token before protected dashboard access is granted.
 
-## Future Cloud Functions
-
-- Send verification email after application submission.
-- Approve/reject vendor applications.
-- Approve/reject rider applications.
-- Create order records with server timestamp.
-- Send order status notifications.
+The initial admin bootstrap callable is restricted to the server-side allowlisted Firebase UID. All other callers receive `permission-denied`.

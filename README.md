@@ -1,129 +1,68 @@
 # Mama Meals
 
-Mama Meals is a mobile-friendly HTML prototype for a Kenyan food delivery platform. It is structured so the main screens, data model, and styling can later be converted into a Flutter app with minimal guesswork.
+Mama Meals is a mobile-first Kenyan food delivery web app. The existing interface is backed by Firebase Authentication, Firestore, Cloud Functions, and Cloud Storage, with Netlify serving the production `dist/` build.
 
-## Purpose
-
-The project demonstrates the customer-facing flow for ordering local meals from home kitchens and vendors. It includes browsing meals, adding items to a cart, checkout, application pages for riders and cooks, and customer support.
-
-## Project Structure
+## Architecture
 
 ```text
 mama-meals/
-  index.html                 Home page with vendor search, filters, categories, promo slideshow, and shop links
-  cart.html                  Cart and checkout page with quantities, payment choice, and confirmation
-  shop.html                  Vendor shop/menu page with meals, sides, drinks, snacks, and add-to-cart buttons
-  order-history.html         Customer order list with reorder/review/test status controls
-  order-tracking.html        Static-ready tracking page with status steps and map placeholder
-  account.html               Customer account, roles, saved details, team links, and dashboard access
-  admin-dashboard.html       Protected admin dashboard placeholder
-  vendor-dashboard.html      Protected vendor dashboard placeholder
-  rider-dashboard.html       Protected rider dashboard placeholder
-  apply-rider.html           Rider application form
-  apply-cook.html            Cook/vendor application form
-  contact.html               Customer support form and WhatsApp link
-  config.json                Shared brand, pricing, contact, and API placeholder settings
-  assets/
-    css/
-      style.css              Shared responsive styling for all pages
-    js/
-      app.js                 Cart storage, filtering, slideshow, checkout, and confirmation logic
-  scripts/
-    build-production.js      Creates the minified production dist folder
-    check-links.js           Verifies internal HTML links and assets
-  images/
-    01_bibis_traditional_meals.png
-    02_chapati_spot.png
-    03_mama_sarahs_kitchen.png
-    04_nairobi_delights.png
-    05_free_fast_delivery.png
-    06_join_the_team_rider.png
+  *.html                         Customer, partner, admin, and authentication screens
+  assets/css/style.css           Shared responsive design and brand styles
+  assets/js/app.js               UI, anonymous cart/location preferences, and page flows
+  assets/js/firebase-client.js   Firebase Auth, Firestore, callable function, and Storage client
+  functions/index.js             Trusted order, application, role, menu, and rider operations
+  firebase/firestore.rules       Deny-by-default Firestore authorization
+  firebase/storage.rules         Private application files and controlled image uploads
+  scripts/build-production.js    Netlify production bundle and runtime config generation
+  scripts/check-links.js         Local link and asset validation
+  netlify.toml                   Netlify build and publish configuration
+  firebase.json                  Functions, rules, and Firebase Hosting configuration
+  config.json                    Public brand, pricing, contact, and architecture metadata
+  images/                        Existing images, preserved with their original names
 ```
 
-## Current Features
+## Security Model
 
-- Mobile-first home page using Mama Meals brand colors.
-- Delivery location header, search field, and horizontal meal categories.
-- Promo slideshow for delivery and rider recruitment.
-- Featured vendor cards with image, description, delivery time, and price. Tapping a card opens the full shop/menu page.
-- Horizontal filter rail for pickup-only, offers, delivery fee, delivery time, rating, price, and sorting.
-- Icon-only mobile bottom navigation for Home, Orders, and Account.
-- Notification bell placeholder for future promotions and alerts.
-- Persistent cart stored in browser `localStorage`.
-- Cart and checkout page with item quantities, subtotal, delivery fee, total, address, instructions, and payment method.
-- Placeholder M-Pesa Daraja integration area.
-- Rider, cook/vendor, and support forms.
-- WhatsApp contact link using the configured support number.
+- Firebase Authentication is the only account source. Email/password sessions use Firebase browser persistence and email verification.
+- Passwords, account records, applications, orders, partner profiles, menus, and roles are never stored in browser `localStorage`.
+- `localStorage` is used only for the anonymous cart and selected delivery area.
+- On startup, obsolete prototype account, password, application, order, and partner records are removed from browser storage. They are not migrated into Firebase; customers must create or sign in to a Firebase account.
+- Admin, vendor, and rider access is enforced with Firebase Auth custom claims set by trusted callable functions.
+- Partner application images pass through a verified, owner-bound callable upload. Browser Storage access to `applications/` is denied; the server writes without Firebase download tokens. Public menu uploads remain separate.
+- Application and menu uploads are checked server-side for MIME type, 2MB maximum size, minimum 800x600 resolution, and 1:1 or 4:3 aspect ratio. Visual declarations such as no watermark or blur still require admin review.
+- Order prices, totals, role transitions, status changes, and reference numbers are controlled by Cloud Functions rather than browser values.
+- Firestore and Storage rules deny unrecognized paths and all direct protected writes.
+- The initial admin bootstrap callable accepts only the server-side allowlisted Firebase UID. No admin token, password, service account, or private API secret is shipped to the browser.
 
-## Configuration
+Firebase Web App configuration values are public identifiers by design. Private credentials must be stored in Google Secret Manager or the Cloud Functions environment and must never be added to Netlify client variables, `config.json`, or frontend JavaScript.
 
-Core project settings live in `config.json`.
+## Firebase Data
 
-Use this file as the future source of truth for:
+The production foundation uses these collections:
 
-- Brand colors
-- Delivery fee and default item prices
-- Contact details
-- Vendor metadata
-- API integration placeholders
+- `users/{uid}`: customer profile and server-maintained role labels
+- `applications/{applicationId}`: cook/rider applications and protected document metadata
+- `vendors/{uid}` and `riders/{uid}`: approved partner profiles
+- `menuItems/{itemId}`: vendor-owned menu items
+- `orders/{orderId}`: server-priced customer orders and delivery state
+- `systemCounters/{date}`: private server-only order numbering
 
-JSON does not support comments, so explanatory notes are kept here instead of inside `config.json`.
+Application images are stored below `applications/{uid}/{applicationId}/`. Vendor menu images are stored below `vendors/{uid}/menu/{itemId}/`. Plate-bearing rider vehicle photos remain private application images, not public menu media.
 
-## Flutter Conversion Notes
+## Local Setup
 
-The prototype is already split into screens and reusable concepts that map naturally into Flutter:
+Install frontend and function dependencies:
 
-- `index.html` can become a `HomeScreen`.
-- `cart.html` can become a `CartCheckoutScreen`.
-- `apply-rider.html`, `apply-cook.html`, and `contact.html` can become separate form screens.
-- `assets/js/app.js` shows the temporary state model for cart items: `name`, `price`, `image`, and `quantity`.
-- `config.json` can become a Dart config class, remote config document, or seeded backend data.
-- CSS color variables map directly to Flutter theme constants.
-
-## Code Comments And Maintainability
-
-The app is intentionally organized with clear class names and separated files:
-
-- HTML files hold page structure and form fields.
-- `style.css` groups styling by feature area.
-- `app.js` groups behavior into small functions for cart storage, totals, filtering, slideshow, and checkout.
-
-When converting to Flutter, keep those same boundaries: screens for pages, widgets for repeated UI, models for cart/vendor data, and services for payments/contact APIs.
-
-## Future Plans
-
-- Replace browser-only `localStorage` cart storage with a real account/cart backend.
-- Connect M-Pesa Daraja STK push for live payments.
-- Add rider and cook/vendor application submission endpoints.
-- Add order tracking and order history.
-- Add user login and saved addresses.
-- Add admin tools for vendors, menus, pricing, and order management.
-- Add Flutter mobile app using this prototype as the product reference.
-
-## Production Build
-
-Run these checks before hosting:
-
-```bash
-npm run check
-npm run build
+```powershell
+npm install
+cd functions
+npm install
+cd ..
 ```
 
-The build command creates `dist/` with:
+Cloud Functions target Node.js 22. The Netlify frontend build uses Node.js 20.
 
-- Minified `assets/css/style.min.css`
-- Minified `assets/js/app.min.js`
-- HTML files updated to use the minified assets
-- Images copied with their original names
-- Firebase and hosting templates copied for deployment reference
-
-Image files are currently copied as-is to preserve the exact filenames and visual quality. Before a real production launch, compress the PNG files with a local image tool such as `sharp`, `pngquant`, or an equivalent design export pipeline, then keep the same filenames.
-
-## Environment Variables
-
-Use `.env.production.example` as the production checklist. Do not commit real private server credentials.
-
-Required public Firebase values:
+Create a Firebase Web App in the existing Firebase project, enable Email/Password Authentication, and set the public Web App values in the shell or a local untracked `.env` workflow using the names in `.env.example`:
 
 - `FIREBASE_API_KEY`
 - `FIREBASE_AUTH_DOMAIN`
@@ -131,24 +70,54 @@ Required public Firebase values:
 - `FIREBASE_STORAGE_BUCKET`
 - `FIREBASE_MESSAGING_SENDER_ID`
 - `FIREBASE_APP_ID`
+- `FIREBASE_MEASUREMENT_ID` (optional Analytics identifier)
+- `FIREBASE_FUNCTIONS_REGION` (defaults to `europe-west1`)
 
-Daraja/M-Pesa secrets must live in a secure backend or cloud function, not in the static frontend.
+For local builds, place the public Web App values in the git-ignored `.env.local` file. The build loads this file when present; environment variables supplied by Netlify take precedence. Do not put private credentials in this file.
 
-## Firebase Production Checklist
+No active Firebase CLI target is committed. The read-only release preflight expects the existing `mamameal-8946b` project; select and verify the intended project before any approved manual deployment:
 
-Before deploying live data:
+```powershell
+firebase login
+firebase use --add
+```
 
-- Replace placeholder Firebase config with production project values.
-- Confirm Firebase Auth email/password is enabled.
-- Require email verification before sensitive account actions.
-- Deploy Firestore and Storage security rules.
-- Verify role-based access for customer, vendor, rider, and admin accounts.
-- Confirm emulator/test mode is off for production.
+## Checks And Build
 
-## Hosting Steps
+```powershell
+npm run check
+npm run test:firebase-security
+npm run build:isolated-check
+npm --prefix functions run check
+```
 
-1. Update `.env.production.example` values in the hosting provider settings.
-2. Run `npm run check`.
-3. Run `npm run build`.
-4. Deploy the contents of `dist/` to Firebase Hosting, Netlify, or another static host.
-5. After deployment, test Home, Shop, Cart, Checkout, Account, Orders, Tracking, Admin, Vendor, and Rider routes on a mobile screen.
+`npm run build` replaces `dist/`, bundles the modular Firebase client, minifies the existing CSS and app JavaScript, injects only public Firebase Web App configuration, copies the existing images unchanged, and adds the Netlify redirects and security headers. Do not run it in a worktree with modified `dist/` unless those changes may be replaced. `npm run build:isolated-check` validates the production branch with synthetic public config without changing the working `dist/`.
+
+The full production gate order, safe smoke test, and rollback procedure are in [docs/PRODUCTION_RUNBOOK.md](docs/PRODUCTION_RUNBOOK.md). `npm run preflight:production` validates supplied public environment variables and local configuration without contacting the live project.
+
+When Netlify sets `CONTEXT=production`, the build fails if required Firebase Web App variables are missing. Local builds remain available with a fail-closed empty config for code and layout checks.
+
+## Netlify Production Setup
+
+Netlify reads `netlify.toml`, runs `npm run build`, and publishes `dist/`. Add the public Firebase Web App variables above in **Site configuration > Environment variables**. Do not add Admin SDK keys, service-account JSON, M-Pesa secrets, email provider secrets, or Storage credentials.
+
+Netlify deploys the frontend only. Deploy the trusted backend separately from an authorized workstation after reviewing the selected Firebase project:
+
+```powershell
+firebase deploy --only functions,firestore:rules,storage
+```
+
+After the backend is deployed, sign in with the allowlisted initial admin Firebase account, open `admin-dashboard.html`, and choose **Verify Admin Access** once. The callable function verifies the UID server-side, creates the admin custom claim, and refreshes the session.
+
+## Current Integration Boundaries
+
+- M-Pesa, Google Pay, Apple Pay, and card payment processing remain UI placeholders. Payment secrets and callbacks need a server-side payment integration.
+- Application confirmation email is not sent until a transactional email provider is configured in Cloud Functions.
+- Firebase App Check is not enabled yet; enable it after registering the final production domains and test it before enforcement.
+- Static catalogue dishes remain supported by a server-owned price list. Publishing approved vendor menu items into customer search is a separate catalogue integration step.
+- Visual quality rules such as no watermark, logo, text, clutter, or blur cannot be proven reliably by MIME and dimension checks; admin approval remains required.
+- New cook/rider intake and review fail closed until complete retention periods are configured in the Functions environment. Eight owner-approved operational values are configured locally only in ignored `functions/.env.local`; they are not deployed. Confirmed applicant notice, the declined appeal window, open appeals/disputes, and reviewed legal holds gate private-file deletion. The proposed hourly worker also flags old pending applications without deleting them. Long-term application-record and access/security-log retention remain unresolved. See [docs/PRODUCTION_RUNBOOK.md](docs/PRODUCTION_RUNBOOK.md) and `firebase/STORAGE_PROPOSAL.md`.
+
+## Brand And Assets
+
+The existing colors, responsive layouts, and image files remain the design source of truth. Production builds copy all files in `images/` without renaming or visual modification.

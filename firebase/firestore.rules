@@ -6,83 +6,138 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
+    function owns(userId) {
       return signedIn() && request.auth.uid == userId;
     }
 
+    function hasRole(role) {
+      return signedIn() && request.auth.token[role] == true;
+    }
+
     function isAdmin() {
-      return signedIn()
-        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+      return hasRole('admin') && request.auth.token.email_verified == true
+        && exists(/databases/$(database)/documents/adminSecurity/global)
+        && get(/databases/$(database)/documents/adminSecurity/global).data.enabled == true
+        && !get(/databases/$(database)/documents/adminSecurity/global).data.blockedUids.hasAny([request.auth.uid]);
     }
 
-    function isApprovedVendor(vendorId) {
-      return signedIn()
-        && exists(/databases/$(database)/documents/vendors/$(vendorId))
-        && get(/databases/$(database)/documents/vendors/$(vendorId)).data.ownerId == request.auth.uid
-        && get(/databases/$(database)/documents/vendors/$(vendorId)).data.status == "approved";
+    function hasApprovedVendor(ownerId) {
+      return hasRole('vendor') && request.auth.uid == ownerId
+        && exists(/databases/$(database)/documents/vendors/$(ownerId))
+        && get(/databases/$(database)/documents/vendors/$(ownerId)).data.status == 'approved';
     }
 
-    function isApprovedRider(riderId) {
-      return signedIn()
-        && exists(/databases/$(database)/documents/riders/$(riderId))
-        && get(/databases/$(database)/documents/riders/$(riderId)).data.userId == request.auth.uid
-        && get(/databases/$(database)/documents/riders/$(riderId)).data.status == "approved";
+    function hasApprovedRider(ownerId) {
+      return hasRole('rider') && request.auth.uid == ownerId
+        && exists(/databases/$(database)/documents/riders/$(ownerId))
+        && get(/databases/$(database)/documents/riders/$(ownerId)).data.status == 'approved';
+    }
+
+    function safeUserCreate(userId) {
+      return owns(userId)
+        && request.resource.data.keys().hasOnly([
+          'fullName', 'phone', 'email', 'location', 'addresses',
+          'notifications', 'language', 'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.email == request.auth.token.email;
+    }
+
+    function safeUserUpdate() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'fullName', 'phone', 'location', 'addresses',
+          'notifications', 'language', 'updatedAt'
+        ])
+        && request.resource.data.email == resource.data.email;
     }
 
     match /users/{userId} {
-      allow create: if isOwner(userId);
-      allow read, update: if isOwner(userId) || isAdmin();
-      allow delete: if isAdmin();
+      allow create: if safeUserCreate(userId);
+      allow get: if owns(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow update: if owns(userId) && safeUserUpdate();
+      allow delete: if false;
+    }
+
+    match /applications/{applicationId} {
+      allow get: if signedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isAdmin() || (
+        signedIn()
+        && resource.data.userId == request.auth.uid
+        && request.query.limit <= 100
+      );
+      allow create, update, delete: if false;
+    }
+
+    // Draft slots and private document access logs are server-owned.
+    match /applicationSlots/{slotId} {
+      allow read, write: if false;
+    }
+
+    match /applicationClaimLocks/{lockId} {
+      allow read, write: if false;
+    }
+
+    match /applicationUsage/{usageId} {
+      allow read, write: if false;
+    }
+
+    match /applicationDocumentAccess/{entryId} {
+      allow read, write: if false;
+    }
+
+    match /applications/{applicationId}/events/{eventId} {
+      allow read, write: if false;
+    }
+
+    match /claimAuditEvents/{entryId} {
+      allow read, write: if false;
+    }
+
+    match /applicationFailureHistory/{entryId} {
+      allow read, write: if false;
+    }
+
+    match /applicationNoticeReceipts/{applicationId} {
+      allow read, write: if false;
+    }
+
+    match /adminSecurity/{entryId} {
+      allow read, write: if false;
     }
 
     match /vendors/{vendorId} {
-      allow read: if true;
-      allow create: if signedIn();
-      allow update: if isApprovedVendor(vendorId) || isAdmin();
-      allow delete: if isAdmin();
+      allow read: if resource.data.status == 'approved' || owns(vendorId) || isAdmin();
+      allow create, update, delete: if false;
     }
 
     match /riders/{riderId} {
-      allow create: if signedIn();
-      allow read, update: if isApprovedRider(riderId) || isAdmin();
-      allow delete: if isAdmin();
+      allow read: if owns(riderId) || isAdmin();
+      allow create, update, delete: if false;
     }
 
     match /orders/{orderId} {
-      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
-      allow read: if isAdmin()
-        || (signedIn() && resource.data.userId == request.auth.uid)
-        || (signedIn() && resource.data.vendorOwnerId == request.auth.uid)
-        || (signedIn() && resource.data.riderUserId == request.auth.uid);
-      allow update: if isAdmin()
-        || (signedIn() && resource.data.vendorOwnerId == request.auth.uid)
-        || (signedIn() && resource.data.riderUserId == request.auth.uid);
-      allow delete: if isAdmin();
+      allow read: if signedIn() && (
+        isAdmin()
+        || resource.data.customerId == request.auth.uid
+        || hasApprovedVendor(resource.data.vendorOwnerId)
+        || hasApprovedRider(resource.data.assignedRiderId)
+      );
+      allow create, update, delete: if false;
     }
 
     match /menuItems/{menuItemId} {
-      allow read: if true;
-      allow create, update: if signedIn()
-        && request.resource.data.vendorOwnerId == request.auth.uid;
-      allow delete: if signedIn()
-        && resource.data.vendorOwnerId == request.auth.uid;
+      allow read: if resource.data.available == true
+        || (signedIn() && resource.data.vendorOwnerId == request.auth.uid)
+        || isAdmin();
+      allow create, update, delete: if false;
     }
 
-    match /vendorApplications/{applicationId} {
-      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
-      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
-      allow update, delete: if isAdmin();
+    match /systemCounters/{counterId} {
+      allow read, write: if false;
     }
 
-    match /riderApplications/{applicationId} {
-      allow create: if signedIn() && request.resource.data.userId == request.auth.uid;
-      allow read: if isAdmin() || (signedIn() && resource.data.userId == request.auth.uid);
-      allow update, delete: if isAdmin();
-    }
-
-    match /adminSettings/{settingId} {
-      allow read, write: if isAdmin();
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

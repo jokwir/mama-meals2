@@ -1,4 +1,11 @@
 {
+  "functions": {
+    "source": "functions",
+    "runtime": "nodejs22",
+    "predeploy": [
+      "npm --prefix \"$RESOURCE_DIR\" run check"
+    ]
+  },
   "firestore": {
     "rules": "firebase/firestore.rules",
     "indexes": "firebase/firestore.indexes.json"
@@ -7,11 +14,11 @@
     "rules": "firebase/storage.rules"
   },
   "hosting": {
-    "public": ".",
+    "public": "dist",
     "ignore": [
-      "firebase/**",
-      "README.md",
-      "config.json"
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
     ]
   }
 }

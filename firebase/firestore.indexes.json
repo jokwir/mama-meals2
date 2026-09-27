@@ -1,45 +1,51 @@
 {
   "indexes": [
     {
-      "collectionGroup": "orders",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "userId", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "orders",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "vendorId", "order": "ASCENDING" },
-        { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "createdAt", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "menuItems",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "vendorId", "order": "ASCENDING" },
-        { "fieldPath": "category", "order": "ASCENDING" },
-        { "fieldPath": "isAvailable", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "vendorApplications",
+      "collectionGroup": "applications",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "submittedAt", "order": "DESCENDING" }
+        { "fieldPath": "expiryNextAttemptAt", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionGroup": "riderApplications",
+      "collectionGroup": "applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "cleanupPending", "order": "ASCENDING" },
+        { "fieldPath": "finalCleanupAfter", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "reviewNeedsReconcile", "order": "ASCENDING" },
+        { "fieldPath": "reviewNextAttemptAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "documentCleanupPending", "order": "ASCENDING" },
+        { "fieldPath": "documentNextAttemptAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "applications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "recordMinimizePending", "order": "ASCENDING" },
+        { "fieldPath": "recordMinimizeAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "applications",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "status", "order": "ASCENDING" },
-        { "fieldPath": "submittedAt", "order": "DESCENDING" }
+        { "fieldPath": "pendingReviewAlertAt", "order": "ASCENDING" }
       ]
     }
   ],

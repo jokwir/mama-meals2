@@ -1,6 +1,6 @@
-// Production Firebase Web SDK template.
-// Copy this to your real production config location during deployment.
-// Do not commit private server credentials here.
+// Documentation-only Firebase Web SDK template.
+// The production build reads these public identifiers from Netlify environment variables.
+// Never add Firebase Admin credentials or other server secrets here.
 
 export const firebaseConfig = {
   apiKey: process.env.FIREBASE_API_KEY,

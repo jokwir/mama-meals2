@@ -1,0 +1,19 @@
+{
+  "name": "mama-meals-functions",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "check": "node --check index.js && node --check maintenance-http.js && node --check application-workflow.js && node --check private-upload.js && node --check review-workflow.js && node --check retention-workflow.js && node --check record-retention.js && node --check audit-retention.js && node --check application-protection.js && node --check admin-security.js && node --check claim-recovery.js && node --check runtime-config.js && node --check job-failures.js"
+  },
+  "dependencies": {
+    "@google-cloud/firestore": "9.1.0",
+    "@google-cloud/storage": "8.1.0",
+    "firebase-admin": "14.4.0",
+    "firebase-functions": "7.4.0",
+    "sharp": "0.35.4"
+  }
+}

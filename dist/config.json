@@ -36,26 +36,12 @@
     "freeFastDelivery": "images/05_free_fast_delivery.png",
     "joinTeamRider": "images/06_join_the_team_rider.png"
   },
-  "apiPlaceholders": {
-    "mpesaDaraja": {
-      "enabled": false,
-      "environment": "sandbox",
-      "baseUrl": "",
-      "consumerKey": "",
-      "consumerSecret": "",
-      "businessShortCode": "",
-      "passkey": "",
-      "callbackUrl": ""
-    },
-    "forms": {
-      "riderApplicationEndpoint": "",
-      "cookApplicationEndpoint": "",
-      "contactSupportEndpoint": ""
-    },
-    "orders": {
-      "createOrderEndpoint": "",
-      "orderStatusEndpoint": ""
-    }
+  "backend": {
+    "provider": "Firebase",
+    "authentication": "Firebase Authentication email/password",
+    "protectedWrites": "Firebase callable functions",
+    "roles": "Firebase Authentication custom claims",
+    "privateSecrets": "Server-side only in Google Secret Manager or Cloud Functions environment"
   },
   "futureFlutterMapping": {
     "themeSource": "brand",
@@ -70,6 +56,11 @@
       "cartCheckout": "cart.html",
       "riderApplication": "apply-rider.html",
       "cookApplication": "apply-cook.html",
+      "applicationConfirmation": "application-confirmation.html",
+      "customerAccount": "account.html",
+      "vendorDashboard": "vendor-dashboard.html",
+      "riderDashboard": "rider-dashboard.html",
+      "adminDashboard": "admin-dashboard.html",
       "support": "contact.html"
     }
   }

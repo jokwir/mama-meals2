@@ -13,42 +13,116 @@
             <span class="location-kicker">Cook and vendor application</span>
             <h1>Become a Local Kitchen Partner</h1>
         </div>
+        <span data-auth-actions>
+            <a class="auth-link" href="register.html">Sign Up</a>
+            <a class="auth-link" href="login.html">Log In</a>
+        </span>
+        <a class="auth-welcome" href="account.html" data-auth-welcome hidden></a>
     </header>
 
-    <main class="application-layout compact-application">
-        <section class="application-intro checkout-panel">
+    <main class="application-layout application-flow-layout">
+        <section class="application-intro checkout-panel application-side-panel">
+            <span class="application-step">Kitchen partner application</span>
             <h2>Bring your kitchen to more customers</h2>
-            <p>Mama Meals partners with trusted local cooks and vendors serving fresh Kenyan meals.</p>
+            <p>Mama Meals partners with trusted local cooks serving consistent, freshly prepared food.</p>
+            <ol class="application-checklist">
+                <li>Tell us about you and your kitchen</li>
+                <li>Add clear identity and food-safety documents</li>
+                <li>Submit for an administrator to review</li>
+            </ol>
+            <div class="application-trust-note">
+                <strong>Before you start</strong>
+                <p>Have your ID, food permit or certificate, and one clear food photo ready. Files are checked in your browser before submission.</p>
+            </div>
         </section>
 
-        <form class="checkout-panel application-form" data-application-form="cook">
-            <label class="field-label" for="cook-name">Full Name/Business Name</label>
-            <input class="text-field" id="cook-name" type="text" required>
+        <section class="checkout-panel application-auth-gate" data-application-auth-gate hidden>
+            <span class="status-badge status-pending">Account required</span>
+            <h2>Sign in before you apply</h2>
+            <p class="support-copy">Your account keeps the application attached to you and lets you see its review status.</p>
+            <a class="primary-link" data-register-return href="register.html">Create Account</a>
+            <a class="secondary-link" data-login-return href="login.html">Log In</a>
+        </section>
 
-            <label class="field-label" for="cook-phone">Phone</label>
-            <input class="text-field" id="cook-phone" type="tel" required>
-
-            <label class="field-label" for="cook-email">Email</label>
-            <input class="text-field" id="cook-email" type="email">
-
-            <label class="field-label" for="cook-location">Location</label>
-            <input class="text-field" id="cook-location" type="text" required>
-
-            <label class="field-label" for="food-type">Type of food</label>
-            <input class="text-field" id="food-type" type="text" placeholder="e.g. Pilau, Chapati, Githeri" required>
-
-            <label class="field-label" for="cook-experience">Experience</label>
-            <textarea class="text-field textarea-field" id="cook-experience" placeholder="Tell us about your cooking or food business experience"></textarea>
-
-            <div class="upload-note">
-                <strong>ID upload note</strong>
-                <p>ID and food-safety documents will be collected during verification.</p>
+        <form class="checkout-panel application-form" data-application-form="cook" novalidate>
+            <div class="application-form-heading">
+                <div>
+                    <span class="location-kicker">About you</span>
+                    <h2>Kitchen details</h2>
+                </div>
+                <span class="status-badge status-delivered">About 5 minutes</span>
             </div>
 
-            <button class="place-order-button" type="submit">Submit Kitchen Application</button>
-            <p class="application-success" data-application-success hidden>Thank you! We’ll review your details and send a verification email shortly.</p>
+            <div class="application-field-grid">
+                <label class="field-label" for="cook-name">Full name
+                    <input class="text-field" id="cook-name" name="fullName" type="text" autocomplete="name" required>
+                </label>
+                <label class="field-label" for="cook-business">Kitchen or business name
+                    <input class="text-field" id="cook-business" name="businessName" type="text" required placeholder="Example: Mama Njeri's Kitchen">
+                </label>
+                <label class="field-label" for="cook-phone">Phone number
+                    <input class="text-field" id="cook-phone" name="phone" type="tel" autocomplete="tel" required placeholder="+254 700 000 000">
+                </label>
+                <label class="field-label" for="cook-email">Email address
+                    <input class="text-field" id="cook-email" name="email" type="email" autocomplete="email" required>
+                </label>
+                <label class="field-label" for="cook-location">Kitchen location
+                    <input class="text-field" id="cook-location" name="location" type="text" required placeholder="Estate, street, or landmark">
+                </label>
+                <label class="field-label" for="cook-service-area">Delivery or pickup area
+                    <input class="text-field" id="cook-service-area" name="serviceArea" type="text" required placeholder="Example: Kilimani and Lavington">
+                </label>
+                <label class="field-label application-span-full" for="food-type">Food you plan to sell
+                    <input class="text-field" id="food-type" name="foodType" type="text" placeholder="Example: Pilau, chapati, githeri and fresh juice" required>
+                </label>
+                <label class="field-label application-span-full" for="cook-experience">Cooking or business experience
+                    <textarea class="text-field textarea-field" id="cook-experience" name="experience" minlength="20" required placeholder="Tell us how long you have cooked for customers and how you currently take orders"></textarea>
+                </label>
+            </div>
+
+            <section class="application-documents" aria-labelledby="cook-documents-heading">
+                <div class="application-section-heading">
+                    <span class="location-kicker">Verification</span>
+                    <h2 id="cook-documents-heading">Required documents</h2>
+                    <p>Every upload must be JPG, PNG, or WebP, under 2MB, at least 800x600px, and either 1:1 or 4:3. Documents must be fully visible and readable.</p>
+                </div>
+
+                <div class="application-upload" data-application-upload data-kind="document" data-required="true">
+                    <label class="field-label" for="cook-id-upload">National ID or passport</label>
+                    <input class="application-file-input" id="cook-id-upload" name="identityDocument" type="file" accept="image/jpeg,image/png,image/webp" required>
+                    <small>Upload one image showing the full document, including every edge, clearly.</small>
+                    <p class="upload-result" data-upload-result hidden></p>
+                </div>
+
+                <div class="application-upload" data-application-upload data-kind="document" data-required="true">
+                    <label class="field-label" for="cook-safety-upload">Food permit or safety certificate</label>
+                    <input class="application-file-input" id="cook-safety-upload" name="foodSafetyDocument" type="file" accept="image/jpeg,image/png,image/webp" required>
+                    <small>Use a current permit or certificate with the details fully readable.</small>
+                    <p class="upload-result" data-upload-result hidden></p>
+                </div>
+
+                <div class="application-upload" data-application-upload data-kind="food" data-required="true">
+                    <label class="field-label" for="cook-food-upload">Clear food photo</label>
+                    <input class="application-file-input" id="cook-food-upload" name="foodPhoto" type="file" accept="image/jpeg,image/png,image/webp" required>
+                    <small>Show one finished dish in good light, with no watermark, logo, text, clutter, or blur.</small>
+                    <label class="checkbox-row upload-declaration"><input type="checkbox" data-upload-confirm required><span>I confirm this is my food and the photo is clear and unedited.</span></label>
+                    <div class="application-upload-preview" data-upload-preview></div>
+                    <p class="upload-result" data-upload-result hidden></p>
+                </div>
+            </section>
+
+            <label class="checkbox-row application-consent">
+                <input type="checkbox" name="consent" required>
+                <span>I confirm these details are accurate and I agree to be contacted about verification.</span>
+            </label>
+
+            <p class="auth-message" data-application-message hidden></p>
+            <button class="place-order-button application-submit-button" type="submit">Submit Kitchen Application</button>
+            <p class="application-privacy-note">Your files are uploaded to protected Firebase Storage and are visible only to you and authorized administrators.</p>
         </form>
     </main>
-    <script src="assets/js/app.min.js"></script>
+    <script defer src="assets/js/firebase-config.js"></script>
+    <script defer src="assets/js/firebase-client.min.js"></script>
+    <script defer src="assets/js/app.min.js"></script>
 </body>
 </html>

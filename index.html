@@ -37,13 +37,27 @@
             <div class="map-preview">Map preview placeholder for selected delivery area</div>
         </section>
 
-        <label class="search-box" for="meal-search">
-            <span class="search-action" id="search-action" role="button" tabindex="0" aria-label="Search meals and vendors">Search</span>
+        <div class="search-box" role="search" aria-label="Search meals and vendors">
+            <button class="search-action" id="search-action" type="button">Search</button>
+            <label class="visually-hidden" for="meal-search">Search meals, cooks, vendors</label>
             <input id="meal-search" type="search" placeholder="Search meals, cooks, vendors..." autocomplete="off">
-            <span class="search-clear" id="search-clear" role="button" tabindex="0" aria-label="Clear search" hidden>×</span>
-        </label>
+            <button class="search-clear" id="search-clear" type="button" aria-label="Clear search" hidden>×</button>
+        </div>
 
-        <section class="filter-rail" aria-label="Vendor filters">
+        <nav class="categories" aria-label="Meal categories">
+            <button class="category-chip active" type="button" data-category="All" aria-pressed="true">All</button>
+            <button class="filter-toggle-button" id="filter-toggle" type="button" aria-expanded="false" aria-controls="vendor-filters">Filters</button>
+            <button class="category-chip" type="button" data-category="Traditional" aria-pressed="false">Traditional</button>
+            <button class="category-chip" type="button" data-category="Chapati" aria-pressed="false">Chapati</button>
+            <button class="category-chip" type="button" data-category="Pilau" aria-pressed="false">Pilau</button>
+            <button class="category-chip" type="button" data-category="Nyama Choma" aria-pressed="false">Nyama Choma</button>
+            <button class="category-chip" type="button" data-category="Githeri" aria-pressed="false">Githeri</button>
+            <button class="category-chip" type="button" data-category="Breakfast" aria-pressed="false">Breakfast</button>
+            <button class="category-chip" type="button" data-category="Lunch" aria-pressed="false">Lunch</button>
+            <button class="category-chip" type="button" data-category="Dinner" aria-pressed="false">Dinner</button>
+        </nav>
+
+        <section class="filter-rail" id="vendor-filters" aria-label="Vendor filters">
             <label class="filter-pill"><input type="checkbox" id="filter-open-now"><span>Open Now</span></label>
             <label class="filter-pill"><input type="checkbox" id="filter-pickup"><span>Pickup Only</span></label>
             <label class="filter-pill"><input type="checkbox" id="filter-offers"><span>Offers & Deals</span></label>
@@ -57,44 +71,10 @@
             <label class="filter-control select-filter"><span>Price Range</span><select id="filter-price"><option value="9999">Any price</option><option value="250">Under KSh 250</option><option value="400">Under KSh 400</option><option value="600">Under KSh 600</option></select></label>
             <label class="filter-control select-filter"><span>Sort By</span><select id="filter-sort"><option value="recommended">Recommended</option><option value="rating">Highest Rating</option><option value="fastest">Fastest Arrival Time</option></select></label>
         </section>
-
-        <nav class="categories" aria-label="Meal categories">
-            <button class="category-chip active" type="button" data-category="All">All</button>
-            <button class="category-chip" type="button" data-category="Traditional">Traditional</button>
-            <button class="category-chip" type="button" data-category="Chapati">Chapati</button>
-            <button class="category-chip" type="button" data-category="Pilau">Pilau</button>
-            <button class="category-chip" type="button" data-category="Nyama Choma">Nyama Choma</button>
-            <button class="category-chip" type="button" data-category="Githeri">Githeri</button>
-            <button class="category-chip" type="button" data-category="Breakfast">Breakfast</button>
-            <button class="category-chip" type="button" data-category="Lunch">Lunch</button>
-            <button class="category-chip" type="button" data-category="Dinner">Dinner</button>
-        </nav>
     </header>
 
-    <main>
-        <section class="promo-carousel" aria-label="Promotions" data-public-only>
-            <div class="promo-track" id="promo-track">
-                <article class="promo-slide">
-                    <img src="images/05_free_fast_delivery.png" alt="Free fast delivery">
-                    <div class="promo-copy">
-                        <p>Fresh from local kitchens</p>
-                        <h1>Authentic Kenyan Meals Delivered Fast</h1>
-                    </div>
-                </article>
-                <article class="promo-slide">
-                    <img src="images/06_join_the_team_rider.png" alt="Mama Meals delivery rider">
-                    <div class="promo-copy">
-                        <p>Flexible hours across Nairobi</p>
-                        <h1>Join Our Delivery Team</h1>
-                    </div>
-                </article>
-            </div>
-            <div class="promo-dots" aria-hidden="true">
-                <span class="promo-dot active"></span>
-                <span class="promo-dot"></span>
-            </div>
-        </section>
-
+    <main class="home-main">
+        <h1 class="visually-hidden">Mama Meals - Kenyan food delivery</h1>
         <section class="vendors-section" aria-labelledby="featured-heading">
             <div class="section-heading">
                 <h2 id="featured-heading">Featured Vendors</h2>
@@ -104,6 +84,7 @@
             <div class="vendor-list" id="vendor-list">
                 <article class="vendor-card" data-vendor-id="bibis" data-name="Bibi's Traditional Meals" data-keywords="traditional githeri mukimo lunch dinner" data-cuisine="traditional-kenyan" data-min-order="300" data-best-seller="true" data-fast-delivery="false" data-pickup="true" data-offers="true" data-open="true" data-fee="40" data-time="45" data-rating="4.8" data-price="350" role="link" tabindex="0" aria-label="Open Bibi's Traditional Meals shop">
                     <img src="images/01_bibis_traditional_meals.png" alt="Bibi's Traditional Meals">
+                    <span class="vendor-image-status" aria-hidden="true"><span class="vendor-open-label">Open</span><span class="vendor-rating-label">&#9733; 4.8</span></span>
                     <span class="vendor-logo-badge"><img src="images/01_bibis_traditional_meals.png" alt=""></span>
                     <div class="vendor-details">
                         <div class="vendor-badges"><span class="vendor-badge best-seller-badge">Best Seller</span><span class="vendor-badge cuisine-badge">Traditional Kenyan</span></div>
@@ -119,6 +100,7 @@
 
                 <article class="vendor-card" data-vendor-id="chapati" data-name="The Chapati Spot" data-keywords="chapati stew breakfast lunch dinner vegetarian" data-cuisine="vegetarian" data-min-order="200" data-best-seller="true" data-fast-delivery="true" data-pickup="true" data-offers="false" data-open="true" data-fee="30" data-time="30" data-rating="4.5" data-price="200" role="link" tabindex="0" aria-label="Open The Chapati Spot shop">
                     <img src="images/02_chapati_spot.png" alt="The Chapati Spot">
+                    <span class="vendor-image-status" aria-hidden="true"><span class="vendor-open-label">Open</span><span class="vendor-rating-label">&#9733; 4.5</span></span>
                     <span class="vendor-logo-badge"><img src="images/02_chapati_spot.png" alt=""></span>
                     <div class="vendor-details">
                         <div class="vendor-badges"><span class="vendor-badge best-seller-badge">Best Seller</span><span class="vendor-badge fast-delivery-badge">Fast Delivery</span></div>
@@ -134,6 +116,7 @@
 
                 <article class="vendor-card" data-vendor-id="mama-sarah" data-name="Mama Sarah's Kitchen" data-keywords="pilau nyama choma grill lunch dinner swahili" data-cuisine="nyama-choma" data-min-order="450" data-best-seller="true" data-fast-delivery="false" data-pickup="false" data-offers="true" data-open="false" data-fee="70" data-time="50" data-rating="4.9" data-price="450" role="link" tabindex="0" aria-label="Open Mama Sarah's Kitchen shop">
                     <img src="images/03_mama_sarahs_kitchen.png" alt="Mama Sarah's Kitchen">
+                    <span class="vendor-image-status" aria-hidden="true"><span class="vendor-open-label vendor-closed-label">Closed</span><span class="vendor-rating-label">&#9733; 4.9</span></span>
                     <span class="vendor-logo-badge"><img src="images/03_mama_sarahs_kitchen.png" alt=""></span>
                     <div class="vendor-details">
                         <div class="vendor-badges"><span class="vendor-badge best-seller-badge">Best Seller</span><span class="vendor-badge cuisine-badge">Nyama Choma</span></div>
@@ -149,6 +132,7 @@
 
                 <article class="vendor-card" data-vendor-id="nairobi" data-name="Nairobi Delights" data-keywords="ugali sukuma fish lunch dinner swahili" data-cuisine="swahili" data-min-order="350" data-best-seller="false" data-fast-delivery="true" data-pickup="false" data-offers="false" data-open="true" data-fee="50" data-time="35" data-rating="4.6" data-price="380" role="link" tabindex="0" aria-label="Open Nairobi Delights shop">
                     <img src="images/04_nairobi_delights.png" alt="Nairobi Delights">
+                    <span class="vendor-image-status" aria-hidden="true"><span class="vendor-open-label">Open</span><span class="vendor-rating-label">&#9733; 4.6</span></span>
                     <span class="vendor-logo-badge"><img src="images/04_nairobi_delights.png" alt=""></span>
                     <div class="vendor-details">
                         <div class="vendor-badges"><span class="vendor-badge fast-delivery-badge">Fast Delivery</span><span class="vendor-badge cuisine-badge">Swahili</span></div>
@@ -163,8 +147,81 @@
                 </article>
             </div>
 
-            <p class="empty-state" id="empty-state">No meals found - try adjusting your filters</p>
+            <p class="empty-state" id="empty-state" aria-live="polite">No meals found - try adjusting your filters</p>
 
+        </section>
+
+        <section class="popular-meals-section" aria-labelledby="popular-meals-heading">
+            <div class="section-heading compact-heading">
+                <div>
+                    <span class="section-kicker">Popular near you</span>
+                    <h2 id="popular-meals-heading">Meals worth trying</h2>
+                </div>
+                <a class="section-link" href="#featured-heading">See cooks</a>
+            </div>
+            <div class="popular-meals-list">
+                <a class="popular-meal-card" href="dish.html?vendor=bibis&amp;dish=mukimo-plate">
+                    <img src="images/01_bibis_traditional_meals.png" alt="Mukimo Plate from Bibi's Traditional Meals">
+                    <span class="popular-meal-copy"><strong>Mukimo Plate</strong><small>Bibi's Traditional Meals</small><b>KSh 350</b></span>
+                </a>
+                <a class="popular-meal-card" href="dish.html?vendor=chapati&amp;dish=chapati-and-beans">
+                    <img src="images/02_chapati_spot.png" alt="Chapati and Beans from The Chapati Spot">
+                    <span class="popular-meal-copy"><strong>Chapati and Beans</strong><small>The Chapati Spot</small><b>KSh 200</b></span>
+                </a>
+                <a class="popular-meal-card" href="dish.html?vendor=mama-sarah&amp;dish=chicken-pilau">
+                    <img src="images/03_mama_sarahs_kitchen.png" alt="Chicken Pilau from Mama Sarah's Kitchen">
+                    <span class="popular-meal-copy"><strong>Chicken Pilau</strong><small>Mama Sarah's Kitchen</small><b>KSh 450</b></span>
+                </a>
+                <a class="popular-meal-card" href="dish.html?vendor=nairobi&amp;dish=fish-and-ugali">
+                    <img src="images/04_nairobi_delights.png" alt="Fish and Ugali from Nairobi Delights">
+                    <span class="popular-meal-copy"><strong>Fish and Ugali</strong><small>Nairobi Delights</small><b>KSh 380</b></span>
+                </a>
+            </div>
+        </section>
+
+        <section class="promo-carousel compact-promo" aria-label="Promotions" data-public-only>
+            <div class="promo-track" id="promo-track">
+                <article class="promo-slide">
+                    <img src="images/05_free_fast_delivery.png" alt="Free fast delivery">
+                    <div class="promo-copy">
+                        <p>Fresh from local kitchens</p>
+                        <h2>Authentic Kenyan Meals Delivered Fast</h2>
+                        <a class="promo-action" href="#featured-heading">Browse meals</a>
+                    </div>
+                </article>
+                <article class="promo-slide">
+                    <img src="images/06_join_the_team_rider.png" alt="Mama Meals delivery rider">
+                    <div class="promo-copy">
+                        <p>Flexible hours across Nairobi</p>
+                        <h2>Join Our Delivery Team</h2>
+                        <a class="promo-action" href="apply-rider.html">Apply as a rider</a>
+                    </div>
+                </article>
+            </div>
+            <div class="promo-dots" aria-hidden="true">
+                <span class="promo-dot active"></span>
+                <span class="promo-dot"></span>
+            </div>
+        </section>
+
+        <section class="partner-home-section compact-partner-section" aria-labelledby="partner-home-heading" data-public-only>
+            <div class="partner-home-copy">
+                <span class="location-kicker">Earn with Mama Meals</span>
+                <h2 id="partner-home-heading">Cook local favourites or deliver nearby orders</h2>
+                <p>Choose a path, create your account, and complete one straightforward application.</p>
+            </div>
+            <div class="partner-home-grid">
+                <a class="partner-home-link" href="apply-cook.html">
+                    <span class="partner-home-icon" aria-hidden="true">C</span>
+                    <span><strong>Become a Cook</strong><small>List your kitchen and sell meals</small></span>
+                    <span class="partner-home-arrow" aria-hidden="true">&rsaquo;</span>
+                </a>
+                <a class="partner-home-link" href="apply-rider.html">
+                    <span class="partner-home-icon rider-icon" aria-hidden="true">R</span>
+                    <span><strong>Join as a Rider</strong><small>Deliver locally on your schedule</small></span>
+                    <span class="partner-home-arrow" aria-hidden="true">&rsaquo;</span>
+                </a>
+            </div>
         </section>
     </main>
 

@@ -1,0 +1,14 @@
+rules_version = '2';
+
+// Draft only. firebase.json still points at storage.rules, not this file.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /applications/{userId}/{applicationId}/{type}/{field} {
+      allow read, write: if false;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

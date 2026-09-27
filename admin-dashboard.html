@@ -23,33 +23,50 @@
     <main class="account-layout admin-dashboard" data-admin-dashboard>
         <section class="checkout-empty visible" id="admin-denied">
             <h2>Admin access required</h2>
-            <p>Log in with an authorized admin account to view this dashboard.</p>
-            <a class="primary-link" href="login.html">Log In</a>
+            <p>Sign in with an authorized admin account to continue.</p>
+            <a class="primary-link" href="index.html">Back to Home</a>
         </section>
 
         <section class="account-card profile-card admin-content" hidden>
+            <div class="account-card-heading">
+                <div><span class="location-kicker">Platform overview</span><h2>Today at Mama Meals</h2></div>
+                <span class="status-badge status-delivered">Secure admin access</span>
+            </div>
+            <div class="admin-stat-grid">
+                <article><strong id="admin-user-count">0</strong><span>Users</span></article>
+                <article><strong id="admin-pending-count">0</strong><span>Pending applications</span></article>
+                <article><strong id="admin-order-count">0</strong><span>Orders</span></article>
+                <article><strong id="admin-active-partner-count">0</strong><span>Approved partners</span></article>
+            </div>
+        </section>
+
+        <section class="account-card admin-content" hidden>
+            <div class="account-card-heading">
+                <h2>Partner Applications</h2>
+                <span class="status-badge status-pending" id="admin-review-status">Needs review</span>
+            </div>
+            <p class="support-copy">Review cook and rider applications together with their protected verification uploads.</p>
+            <div class="admin-application-list" id="admin-application-list"></div>
+        </section>
+
+        <section class="account-card admin-content" hidden>
             <h2>User Management</h2>
-            <p class="support-copy">Placeholder for viewing customers, roles, account status, and support actions.</p>
-        </section>
-
-        <section class="account-card admin-content" hidden>
-            <h2>Vendor Applications</h2>
-            <p class="support-copy">Placeholder for reviewing cook applications, documents, approvals, and verification emails.</p>
-        </section>
-
-        <section class="account-card admin-content" hidden>
-            <h2>Rider Applications</h2>
-            <p class="support-copy">Placeholder for reviewing rider applications, vehicle details, approvals, and onboarding checks.</p>
+            <div class="dashboard-list" id="admin-user-list"></div>
         </section>
 
         <section class="account-card admin-content" hidden>
             <h2>Order Overview</h2>
-            <p class="support-copy">Placeholder for live orders, statuses, delivery issues, refunds, and dispatch monitoring.</p>
+            <div class="dashboard-list" id="admin-order-list"></div>
         </section>
 
         <section class="account-card admin-content" hidden>
-            <h2>Settings</h2>
-            <p class="support-copy">Placeholder for platform settings, payment gateways, service areas, delivery fees, and permissions.</p>
+            <h2>Production Readiness</h2>
+            <div class="readiness-list">
+                <div><span>Firebase Authentication</span><strong>Configured foundation</strong></div>
+                <div><span>Document storage</span><strong>Protected by rules</strong></div>
+                <div><span>Email confirmations</span><strong class="readiness-missing">Provider required</strong></div>
+                <div><span>M-Pesa payments</span><strong class="readiness-missing">Daraja credentials required</strong></div>
+            </div>
         </section>
     </main>
 

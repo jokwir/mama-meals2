@@ -13,49 +13,107 @@
             <span class="location-kicker">Rider application</span>
             <h1>Join the Mama Meals Delivery Team</h1>
         </div>
+        <span data-auth-actions>
+            <a class="auth-link" href="register.html">Sign Up</a>
+            <a class="auth-link" href="login.html">Log In</a>
+        </span>
+        <a class="auth-welcome" href="account.html" data-auth-welcome hidden></a>
     </header>
 
-    <main class="application-layout">
+    <main class="application-layout application-flow-layout">
         <section class="application-hero">
             <img src="images/06_join_the_team_rider.png" alt="Mama Meals delivery rider">
             <div class="application-hero-copy">
                 <h2>Deliver meals across Nairobi</h2>
-                <p>Share your details and our team will contact you about rider opportunities.</p>
+                <p>Apply once, verify your identity and vehicle, then follow your status from your account.</p>
             </div>
         </section>
 
-        <form class="checkout-panel application-form" data-application-form="rider">
-            <label class="field-label" for="rider-name">Full Name</label>
-            <input class="text-field" id="rider-name" type="text" required>
+        <section class="checkout-panel application-auth-gate" data-application-auth-gate hidden>
+            <span class="status-badge status-pending">Account required</span>
+            <h2>Sign in before you apply</h2>
+            <p class="support-copy">Your account keeps the application attached to you and lets you see its review status.</p>
+            <a class="primary-link" data-register-return href="register.html">Create Account</a>
+            <a class="secondary-link" data-login-return href="login.html">Log In</a>
+        </section>
 
-            <label class="field-label" for="rider-phone">Phone Number</label>
-            <input class="text-field" id="rider-phone" type="tel" required>
+        <form class="checkout-panel application-form" data-application-form="rider" novalidate>
+            <div class="application-form-heading">
+                <div><span class="location-kicker">Rider details</span><h2>Tell us about you</h2></div>
+                <span class="status-badge status-delivered">About 5 minutes</span>
+            </div>
 
-            <label class="field-label" for="rider-email">Email (optional)</label>
-            <input class="text-field" id="rider-email" type="email">
+            <div class="application-field-grid">
+                <label class="field-label" for="rider-name">Full name
+                    <input class="text-field" id="rider-name" name="fullName" type="text" autocomplete="name" required>
+                </label>
+                <label class="field-label" for="rider-phone">Phone number
+                    <input class="text-field" id="rider-phone" name="phone" type="tel" autocomplete="tel" required placeholder="+254 700 000 000">
+                </label>
+                <label class="field-label" for="rider-email">Email address
+                    <input class="text-field" id="rider-email" name="email" type="email" autocomplete="email" required>
+                </label>
+                <label class="field-label" for="rider-location">Home area
+                    <input class="text-field" id="rider-location" name="location" type="text" required placeholder="Estate or neighbourhood">
+                </label>
+                <label class="field-label" for="vehicle-type">Vehicle type
+                    <select class="text-field" id="vehicle-type" name="vehicleType" required>
+                        <option value="">Select vehicle type</option>
+                        <option>Bicycle</option>
+                        <option>Motorbike</option>
+                        <option>Car</option>
+                        <option>Walking delivery</option>
+                    </select>
+                </label>
+                <label class="field-label" for="registration-plate">Registration plate
+                    <input class="text-field" id="registration-plate" name="registrationPlate" type="text" placeholder="Use N/A for bicycle or walking" required>
+                </label>
+                <label class="field-label application-span-full" for="rider-experience">Delivery experience
+                    <input class="text-field" id="rider-experience" name="experience" type="text" placeholder="Example: 2 years delivering around Westlands">
+                </label>
+                <label class="field-label application-span-full" for="rider-message">Availability
+                    <textarea class="text-field textarea-field" id="rider-message" name="availability" minlength="10" required placeholder="Tell us the days, times, and areas you can cover"></textarea>
+                </label>
+            </div>
 
-            <label class="field-label" for="rider-location">Location</label>
-            <input class="text-field" id="rider-location" type="text" required>
+            <section class="application-documents" aria-labelledby="rider-documents-heading">
+                <div class="application-section-heading">
+                    <span class="location-kicker">Verification</span>
+                    <h2 id="rider-documents-heading">Required photos</h2>
+                    <p>JPG, PNG, or WebP only, under 2MB, at least 800x600px, and 1:1 or 4:3. Your full ID and vehicle plate must be readable.</p>
+                </div>
 
-            <label class="field-label" for="vehicle-type">Vehicle type</label>
-            <select class="text-field" id="vehicle-type" required>
-                <option value="">Select vehicle type</option>
-                <option>Bicycle</option>
-                <option>Motorbike</option>
-                <option>Car</option>
-                <option>Walking delivery</option>
-            </select>
+                <div class="application-upload" data-application-upload data-kind="rider-id" data-required="true">
+                    <label class="field-label" for="rider-id-application-upload">Full ID photo</label>
+                    <input class="application-file-input" id="rider-id-application-upload" name="identityPhoto" type="file" accept="image/jpeg,image/png,image/webp" required>
+                    <small>Place the ID on a plain surface and keep all four corners visible.</small>
+                    <label class="checkbox-row upload-declaration"><input type="checkbox" data-upload-confirm required><span>I confirm the full ID is visible and readable.</span></label>
+                    <div class="application-upload-preview" data-upload-preview></div>
+                    <p class="upload-result" data-upload-result hidden></p>
+                </div>
 
-            <label class="field-label" for="rider-experience">Experience</label>
-            <input class="text-field" id="rider-experience" type="text" placeholder="e.g. 2 years delivery experience">
+                <div class="application-upload" data-application-upload data-kind="vehicle" data-required="true">
+                    <label class="field-label" for="rider-vehicle-application-upload">Vehicle and plate photo</label>
+                    <input class="application-file-input" id="rider-vehicle-application-upload" name="vehiclePhoto" type="file" accept="image/jpeg,image/png,image/webp" required>
+                    <small>Show the whole vehicle. The registration plate must be clear; bicycle and walking applicants should show their delivery equipment.</small>
+                    <label class="checkbox-row upload-declaration"><input type="checkbox" data-upload-confirm required><span>I confirm the vehicle or delivery equipment is mine and clearly shown.</span></label>
+                    <div class="application-upload-preview" data-upload-preview></div>
+                    <p class="upload-result" data-upload-result hidden></p>
+                </div>
+            </section>
 
-            <label class="field-label" for="rider-message">Message</label>
-            <textarea class="text-field textarea-field" id="rider-message" placeholder="Tell us about your availability"></textarea>
+            <label class="checkbox-row application-consent">
+                <input type="checkbox" name="consent" required>
+                <span>I confirm these details are accurate and I agree to be contacted about verification.</span>
+            </label>
 
-            <button class="place-order-button" type="submit">Submit Rider Application</button>
-            <p class="application-success" data-application-success hidden>Thank you! We’ll review your details and send a verification email shortly.</p>
+            <p class="auth-message" data-application-message hidden></p>
+            <button class="place-order-button application-submit-button" type="submit">Submit Rider Application</button>
+            <p class="application-privacy-note">Your files are uploaded to protected Firebase Storage and are visible only to you and authorized administrators.</p>
         </form>
     </main>
-    <script src="assets/js/app.min.js"></script>
+    <script defer src="assets/js/firebase-config.js"></script>
+    <script defer src="assets/js/firebase-client.min.js"></script>
+    <script defer src="assets/js/app.min.js"></script>
 </body>
 </html>

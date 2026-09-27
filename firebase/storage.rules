@@ -6,39 +6,51 @@ service firebase.storage {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
+    function owns(userId) {
       return signedIn() && request.auth.uid == userId;
     }
 
-    function isImage() {
-      return request.resource.contentType.matches('image/.*');
+    function hasRole(role) {
+      return signedIn() && request.auth.token[role] == true;
     }
 
-    function isPdf() {
-      return request.resource.contentType == 'application/pdf';
+    function isAdmin() {
+      return hasRole('admin') && request.auth.token.email_verified == true
+        && firestore.get(/databases/(default)/documents/adminSecurity/global).data.enabled == true
+        && !firestore.get(/databases/(default)/documents/adminSecurity/global).data.blockedUids.hasAny([request.auth.uid]);
+    }
+
+    function validImage() {
+      return request.resource != null
+        && request.resource.size > 0
+        && request.resource.size <= 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/(jpeg|png|webp)');
+    }
+
+    match /applications/{userId}/{applicationId}/{type}/{field} {
+      allow read, write: if false;
+    }
+
+    match /vendors/{userId}/menu/{menuItemId}/{fileName} {
+      allow read: if true;
+      allow write: if owns(userId)
+        && hasRole('vendor')
+        && firestore.get(/databases/(default)/documents/vendors/$(userId)).data.status == 'approved'
+        && (
+          (request.resource != null && validImage()
+            && request.resource.metadata.ownerId == userId
+            && request.resource.metadata.menuItemId == menuItemId)
+          || request.resource == null
+        );
     }
 
     match /users/{userId}/profile/{fileName} {
-      allow read: if signedIn();
-      allow write: if isOwner(userId) && isImage();
+      allow read: if owns(userId) || isAdmin();
+      allow write: if owns(userId) && (validImage() || request.resource == null);
     }
 
-    match /vendors/{vendorId}/images/{fileName} {
-      allow read: if true;
-      allow write: if signedIn() && isImage();
-    }
-
-    match /menu-items/{vendorId}/{fileName} {
-      allow read: if true;
-      allow write: if signedIn() && isImage();
-    }
-
-    match /riders/{riderId}/documents/{fileName} {
-      allow read, write: if signedIn() && (isImage() || isPdf());
-    }
-
-    match /applications/{applicationId}/{fileName} {
-      allow read, write: if signedIn() && (isImage() || isPdf());
+    match /{allPaths=**} {
+      allow read, write: if false;
     }
   }
 }

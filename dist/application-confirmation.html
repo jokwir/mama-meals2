@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Confirmation - Mama Meals</title>
+    <link rel="stylesheet" href="assets/css/style.min.css">
+</head>
+<body class="account-page application-confirmation-page">
+    <header class="checkout-header">
+        <a class="back-link" href="index.html" aria-label="Return to Mama Meals home page">Home</a>
+        <div>
+            <span class="location-kicker">Mama Meals partner application</span>
+            <h1>Application Confirmation</h1>
+        </div>
+    </header>
+
+    <main class="confirmation-layout" data-application-confirmation>
+        <section class="account-card confirmation-summary-card">
+            <div class="confirmation-check" aria-hidden="true">OK</div>
+            <span class="status-badge status-pending" id="application-confirmation-status">Checking</span>
+            <h2 id="application-confirmation-title">Checking submission</h2>
+            <p id="application-confirmation-message">Verifying your application reference.</p>
+
+            <dl class="confirmation-details">
+                <div><dt>Application</dt><dd id="application-confirmation-type">Partner</dd></div>
+                <div><dt>Reference</dt><dd id="application-confirmation-reference">Pending</dd></div>
+                <div><dt>Submitted</dt><dd id="application-confirmation-date">Just now</dd></div>
+                <div><dt>Email</dt><dd id="application-confirmation-email">Not connected</dd></div>
+            </dl>
+
+            <div class="integration-notice" id="application-integration-notice">
+                <strong>Secure submission</strong>
+                <p>Your application is stored securely for admin review. Email notifications require a separately configured email provider.</p>
+            </div>
+        </section>
+
+        <section class="account-card confirmation-next-card">
+            <h2>What happens next</h2>
+            <ol class="confirmation-steps">
+                <li class="complete"><strong>Application completed</strong><span>Your details and file checks are recorded.</span></li>
+                <li><strong>Document review</strong><span>An administrator checks identity, safety, and service details.</span></li>
+                <li><strong>Approval and onboarding</strong><span>Your account receives dashboard access after approval.</span></li>
+            </ol>
+            <a class="primary-link" href="account.html">View Application Status</a>
+            <a class="secondary-link" href="index.html">Return Home</a>
+        </section>
+    </main>
+
+    <script defer src="assets/js/firebase-config.js"></script>
+    <script defer src="assets/js/firebase-client.min.js"></script>
+    <script defer src="assets/js/app.min.js"></script>
+</body>
+</html>

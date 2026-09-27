@@ -21,15 +21,15 @@
             <p class="support-copy">Sign in to manage saved addresses, payments, favorites, and orders.</p>
 
             <form class="account-form" data-auth-form="login" action="account.html">
-                <label class="field-label" for="login-id">Phone Number or Email</label>
-                <input class="text-field" id="login-id" name="loginId" type="text" required>
+                <label class="field-label" for="login-id">Email Address</label>
+                <input class="text-field" id="login-id" name="loginId" type="email" autocomplete="email" required>
 
                 <label class="field-label" for="login-password">Password</label>
                 <input class="text-field" id="login-password" name="password" type="password" required>
 
                 <label class="checkbox-row">
                     <input type="checkbox">
-                    <span>Remember me</span>
+                    <span>Keep me signed in on this device</span>
                 </label>
 
                 <button class="place-order-button" type="submit">Log In</button>
@@ -40,6 +40,7 @@
                 <a href="#" data-password-reset>Forgot Password?</a>
                 <a href="register.html">Don't have an account? Sign Up here</a>
             </div>
+
         </section>
     </main>
 

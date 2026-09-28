@@ -69,7 +69,8 @@ const state = {
     applicationsByUser: {},
     vendorMenu: [],
     vendorProfile: {},
-    riderProfile: {}
+    riderProfile: {},
+    marketplaceVendors: []
 };
 
 let auth;
@@ -142,6 +143,28 @@ async function getMany(collectionName, filters = [], max = 100) {
     const constraints = filters.map(([field, operator, value]) => where(field, operator, value));
     const result = await getDocs(query(collection(db, collectionName), ...constraints, limit(max)));
     return snapshotList(result);
+}
+
+async function loadMarketplace() {
+    requireConfigured();
+    const [menuItems, vendorProfiles] = await Promise.all([
+        getMany("menuItems", [["available", "==", true]], 100),
+        getMany("vendors", [["status", "==", "approved"]], 100)
+    ]);
+    const vendors = new Map(vendorProfiles.map((vendor) => [vendor.id, vendor]));
+    const grouped = new Map();
+    for (const item of menuItems) {
+        const ownerId = item.vendorOwnerId;
+        const vendor = vendors.get(ownerId);
+        if (!vendor || !item.imageUrl || !item.name || !Number.isFinite(Number(item.price)) || Number(item.price) <= 0) continue;
+        if (!grouped.has(ownerId)) {
+            grouped.set(ownerId, { ...vendor, items: [] });
+        }
+        grouped.get(ownerId).items.push(item);
+    }
+    state.marketplaceVendors = [...grouped.values()]
+        .sort((left, right) => String(left.kitchenName || "").localeCompare(String(right.kitchenName || "")));
+    return state.marketplaceVendors;
 }
 
 async function refreshSessionData(forceToken = false) {
@@ -493,6 +516,7 @@ const service = {
     state,
     ready: bootstrap(),
     refresh: refreshSessionData,
+    loadMarketplace,
     register,
     login,
     logout,

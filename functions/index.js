@@ -14,7 +14,7 @@ const protection = require("./application-protection");
 const recordRetention = require("./record-retention");
 const auditRetention = require("./audit-retention");
 const adminSecurity = require("./admin-security");
-const { createMaintenanceHandler } = require("./maintenance-http");
+const { createMaintenanceHandler, maintenanceInvoker } = require("./maintenance-http");
 const { runtimeConfig } = require("./runtime-config");
 
 initializeApp();
@@ -328,7 +328,7 @@ async function runApplicationMaintenance() {
 // Cloud Scheduler is unavailable in africa-south1. A separately configured,
 // IAM-authenticated HTTP job can invoke this private Johannesburg endpoint.
 exports.cleanupAbandonedApplications = onRequest({
-  invoker: "private", maxInstances: 1, concurrency: 1, timeoutSeconds: 120
+  invoker: maintenanceInvoker(), maxInstances: 1, concurrency: 1, timeoutSeconds: 120
 }, createMaintenanceHandler(runApplicationMaintenance));
 
 exports.getApplicationDocument = onCall(async (request) => {
@@ -456,7 +456,7 @@ exports.createOrder = onCall(async (request) => {
   }
   const items = await resolveOrderItems(input.items);
   const vendorIds = [...new Set(items.map((item) => item.vendorOwnerId).filter(Boolean))];
-  if (vendorIds.length > 1) {
+  if (vendorIds.length > 1 || (vendorIds.length === 1 && items.some((item) => !item.vendorOwnerId))) {
     throw new HttpsError("invalid-argument", "Place separate orders for items from different vendors.");
   }
   const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);

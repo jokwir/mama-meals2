@@ -3,7 +3,7 @@ const { after, before, test } = require("node:test");
 const { createHash } = require("node:crypto");
 const { createRequire } = require("node:module");
 const functionsRequire = createRequire(require.resolve("../functions/package.json"));
-const { initializeApp, deleteApp } = functionsRequire("firebase-admin/app");
+const { initializeApp, deleteApp, getApp } = functionsRequire("firebase-admin/app");
 const { getFirestore } = functionsRequire("firebase-admin/firestore");
 const workflow = require("../functions/application-workflow");
 const { runtimeConfig } = require("../functions/runtime-config");
@@ -407,6 +407,7 @@ test("the callable handler rejects an unclaimed reviewer before any document rea
 });
 
 test("verified callers cannot start uploads or reserve reviews without an approved retention configuration", async () => {
+  await getFirestore(getApp()).doc("adminSecurity/global").set({ enabled: true, bootstrapEnabled: false, blockedUids: [] });
   await assert.rejects(callableFunctions.startPartnerApplication.run({
     auth: { uid: "verified-applicant", token: { email_verified: true } },
     data: { type: "cook", fields: {} }

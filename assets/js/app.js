@@ -184,8 +184,84 @@ function escapeHtml(value) {
 
 function getShopMenuItems(shop) {
     return Object.entries(shop.categories).flatMap(([category, items]) => (
-        items.map((item) => ({ ...item, category, slug: slugify(item.name) }))
+        items.map((item) => ({ ...item, category, slug: item.menuItemId || slugify(item.name) }))
     ));
+}
+
+function getMarketplaceShop(vendorId) {
+    if (!vendorId.startsWith("partner-")) return null;
+    const vendor = (getFirebaseState().marketplaceVendors || [])
+        .find((entry) => `partner-${entry.id}` === vendorId);
+    if (!vendor) return null;
+    const categories = { "Main Meals": [], Sides: [], Drinks: [], Snacks: [] };
+    vendor.items.forEach((item) => {
+        if (!categories[item.category]) return;
+        categories[item.category].push({
+            name: item.name,
+            description: item.description,
+            price: Number(item.price),
+            image: item.imageUrl,
+            menuItemId: item.id,
+            vendorOwnerId: vendor.id
+        });
+    });
+    const image = vendor.items[0]?.imageUrl || "images/01_bibis_traditional_meals.png";
+    return {
+        name: vendor.kitchenName || "Local Kitchen",
+        image,
+        logo: image,
+        description: vendor.about || "Fresh meals from a Mama Meals partner kitchen.",
+        about: vendor.about || "Mama Meals approved kitchen partner.",
+        meta: "Delivery available",
+        openingHours: "Ask the kitchen for today's hours",
+        isOpen: vendor.acceptingOrders === true,
+        serviceArea: vendor.serviceArea || "Nairobi",
+        rating: null,
+        reviewCount: 0,
+        isPartner: true,
+        categories
+    };
+}
+
+function renderMarketplaceVendors() {
+    const list = document.querySelector("#vendor-list");
+    if (!list) return;
+    (getFirebaseState().marketplaceVendors || []).forEach((vendor) => {
+        const first = vendor.items[0];
+        const name = vendor.kitchenName || "Local Kitchen";
+        const open = vendor.acceptingOrders === true;
+        const minPrice = Math.min(...vendor.items.map((item) => Number(item.price)));
+        const card = document.createElement("article");
+        card.className = "vendor-card";
+        card.dataset.vendorId = `partner-${vendor.id}`;
+        card.dataset.name = name;
+        card.dataset.keywords = vendor.items.map((item) => `${item.name} ${item.description} ${item.category}`).join(" ");
+        card.dataset.cuisine = "";
+        card.dataset.minOrder = String(minPrice);
+        card.dataset.bestSeller = "false";
+        card.dataset.fastDelivery = "false";
+        card.dataset.pickup = "false";
+        card.dataset.offers = "false";
+        card.dataset.open = String(open);
+        card.dataset.fee = "30";
+        card.dataset.time = "45";
+        card.dataset.rating = "0";
+        card.dataset.price = String(minPrice);
+        card.setAttribute("role", "link");
+        card.tabIndex = 0;
+        card.setAttribute("aria-label", `Open ${name} shop`);
+        card.innerHTML = `
+            <img src="${escapeHtml(first.imageUrl)}" alt="${escapeHtml(name)}">
+            <span class="vendor-logo-badge"><img src="${escapeHtml(first.imageUrl)}" alt=""></span>
+            <div class="vendor-details">
+                <div class="vendor-badges"><span class="vendor-badge cuisine-badge">${open ? "Accepting orders" : "Not accepting orders"}</span></div>
+                <h3>${escapeHtml(name)}</h3>
+                <p>${escapeHtml(first.name)}${vendor.items.length > 1 ? ` and ${vendor.items.length - 1} more` : ""}</p>
+                <div class="vendor-meta"><span>From ${formatShillings(minPrice)}</span><span>${escapeHtml(vendor.serviceArea || "Nairobi")}</span></div>
+            </div>
+        `;
+        list.appendChild(card);
+    });
 }
 
 function getDishDetails(item, shop) {
@@ -219,7 +295,7 @@ function getDishDetails(item, shop) {
 }
 
 function getVendorSearchText(vendorId) {
-    const shop = vendorShops[vendorId];
+    const shop = vendorShops[vendorId] || getMarketplaceShop(vendorId);
     if (!shop) {
         return "";
     }
@@ -254,11 +330,14 @@ function normalizeSearchText(value = "") {
 }
 
 function findDish(vendorId, dishSlug) {
-    const shop = vendorShops[vendorId] || vendorShops.bibis;
+    const shop = vendorShops[vendorId] || getMarketplaceShop(vendorId)
+        || (vendorId.startsWith("partner-") ? null : vendorShops.bibis);
+    if (!shop) return { shop: null, item: null };
     const items = getShopMenuItems(shop);
     return {
         shop,
-        item: items.find((menuItem) => menuItem.slug === dishSlug) || items[0]
+        item: items.find((menuItem) => menuItem.slug === dishSlug)
+            || (shop.isPartner ? null : items[0])
     };
 }
 
@@ -277,7 +356,8 @@ function getCart() {
                 baseName: item?.baseName ? String(item.baseName).slice(0, 120) : legacyBaseName,
                 addOns: Array.isArray(item?.addOns) ? item.addOns.map(String).slice(0, 3) : (legacyAddOns?.split(", ") || []),
                 menuItemId: item?.menuItemId ? String(item.menuItemId).slice(0, 80) : undefined,
-                vendorOwnerId: item?.vendorOwnerId ? String(item.vendorOwnerId).slice(0, 128) : undefined
+                vendorOwnerId: item?.vendorOwnerId ? String(item.vendorOwnerId).slice(0, 128) : undefined,
+                shopId: item?.shopId ? String(item.shopId).slice(0, 80) : undefined
             };
         }).filter((item) => item.name && Number.isFinite(item.price) && item.price > 0);
     } catch {
@@ -410,9 +490,22 @@ function getCartTotals(items = getCart()) {
     return { itemCount, subtotal, total };
 }
 
+function cartKitchenKey(item) {
+    if (item.menuItemId) return `partner:${item.vendorOwnerId || "unknown"}`;
+    return item.shopId ? `shop:${item.shopId}` : "legacy";
+}
+
+function cartItemKey(item) {
+    return item.menuItemId || item.name;
+}
+
 function addItemToCart(item) {
-    const items = getCart();
-    const existing = items.find((cartItem) => cartItem.name === item.name);
+    let items = getCart();
+    if (items.length && items.some((cartItem) => cartKitchenKey(cartItem) !== cartKitchenKey(item))) {
+        if (!window.confirm("Start a new cart for this kitchen? Your current cart will be replaced.")) return null;
+        items = [];
+    }
+    const existing = items.find((cartItem) => cartItemKey(cartItem) === cartItemKey(item));
 
     if (existing) {
         existing.quantity += 1;
@@ -424,9 +517,9 @@ function addItemToCart(item) {
     return items;
 }
 
-function updateItemQuantity(name, change) {
+function updateItemQuantity(itemKey, change) {
     const items = getCart()
-        .map((item) => item.name === name ? { ...item, quantity: item.quantity + change } : item)
+        .map((item) => cartItemKey(item) === itemKey ? { ...item, quantity: item.quantity + change } : item)
         .filter((item) => item.quantity > 0);
 
     saveCart(items);
@@ -550,10 +643,11 @@ function initPersistentAuthNavigation() {
     nav.className = "auth-session-nav";
     nav.setAttribute("aria-label", "Account navigation");
     nav.innerHTML = `
-        <a class="auth-greeting" href="account.html">Hi ${getFirstName(profile)}</a>
+        <a class="auth-greeting" href="account.html"></a>
         <a class="auth-account-link" href="account.html">My Account</a>
         <button class="auth-logout-button" type="button">Log Out</button>
     `;
+    nav.querySelector(".auth-greeting").textContent = `Hi ${getFirstName(profile)}`;
 
     anchor.parentElement.appendChild(nav);
     nav.querySelector(".auth-logout-button").addEventListener("click", async () => {
@@ -1470,23 +1564,31 @@ function initOrderHistoryPage() {
             const order = getOrdersForActiveAccount().find((entry) => entry.id === orderCard.dataset.orderId);
             const items = order?.items || [];
 
-            items.forEach((item) => {
+            let updated = true;
+            for (const item of items) {
                 const quantity = Number(item.quantity || 1);
                 for (let count = 0; count < quantity; count += 1) {
-                    addItemToCart({
+                    if (!addItemToCart({
                         name: item.name,
                         price: Number(item.price),
                         image: item.image,
                         baseName: item.baseName,
                         addOns: item.addOns || [],
                         menuItemId: item.menuItemId,
-                        vendorOwnerId: item.vendorOwnerId
-                    });
+                        vendorOwnerId: item.vendorOwnerId,
+                        shopId: item.shopId
+                    })) {
+                        updated = false;
+                        break;
+                    }
                 }
-            });
+                if (!updated) break;
+            }
 
-            alert("Order items added to your cart.");
-            window.location.href = "cart.html";
+            if (updated) {
+                alert("Order items added to your cart.");
+                window.location.href = "cart.html";
+            }
         }
 
         if (reviewButton) {
@@ -1889,7 +1991,14 @@ function initShopPage() {
 
     const params = new URLSearchParams(window.location.search);
     const vendorId = params.get("vendor") || "bibis";
-    const shop = vendorShops[vendorId] || vendorShops.bibis;
+    const shop = vendorShops[vendorId] || getMarketplaceShop(vendorId)
+        || (vendorId.startsWith("partner-") ? null : vendorShops.bibis);
+    if (!shop) {
+        shopTitle.textContent = "Shop unavailable";
+        shopHero.innerHTML = '<p class="empty-state visible">This kitchen is not available right now. Browse other meals on the home page.</p>';
+        shopMenu.replaceChildren();
+        return;
+    }
 
     function updateShopCartBar(items = getCart(), latestName = "") {
         const { itemCount, total } = getCartTotals(items);
@@ -1901,53 +2010,55 @@ function initShopPage() {
 
     shopTitle.textContent = shop.name;
     shopHero.innerHTML = `
-        <img src="${shop.image}" alt="${shop.name}">
+        <img src="${escapeHtml(shop.image)}" alt="${escapeHtml(shop.name)}">
         <div class="shop-hero-copy">
             <div class="vendor-title-row">
-                <img class="vendor-logo" src="${shop.logo}" alt="${shop.name} logo">
+                <img class="vendor-logo" src="${escapeHtml(shop.logo)}" alt="${escapeHtml(shop.name)} logo">
                 <div>
-                    <h2>${shop.name}</h2>
-                    <p>${shop.description}</p>
+                    <h2>${escapeHtml(shop.name)}</h2>
+                    <p>${escapeHtml(shop.description)}</p>
                 </div>
             </div>
             <div class="vendor-meta detail-meta">
                 <span class="${shop.isOpen ? "open-status" : "closed-status"}">${shop.isOpen ? "Open" : "Closed"}</span>
-                <span>${shop.openingHours}</span>
-                <span>${shop.meta}</span>
-                <span>${shop.rating.toFixed(1)} stars (${shop.reviewCount} reviews)</span>
+                <span>${escapeHtml(shop.openingHours)}</span>
+                <span>${escapeHtml(shop.meta)}</span>
+                <span>${shop.rating == null ? "New kitchen" : `${shop.rating.toFixed(1)} stars (${shop.reviewCount} reviews)`}</span>
             </div>
             <div class="vendor-detail-grid">
-                <div><strong>Service area</strong><span>${shop.serviceArea}</span></div>
-                <div><strong>About</strong><span>${shop.about}</span></div>
+                <div><strong>Service area</strong><span>${escapeHtml(shop.serviceArea)}</span></div>
+                <div><strong>About</strong><span>${escapeHtml(shop.about)}</span></div>
             </div>
         </div>
     `;
 
-    shopMenu.innerHTML = Object.entries(shop.categories).map(([category, items]) => `
+    shopMenu.innerHTML = Object.entries(shop.categories).filter(([, items]) => items.length).map(([category, items]) => `
         <section class="checkout-panel menu-category">
             <div class="section-heading">
-                <h2>${category}</h2>
+                <h2>${escapeHtml(category)}</h2>
                 <span>${items.length} items</span>
             </div>
             <div class="menu-item-list">
                 ${items.map((item) => {
                     const itemDetails = getDishDetails({ ...item, category }, shop);
+                    const dishReference = item.menuItemId || slugify(item.name);
+                    const dishUrl = `dish.html?vendor=${encodeURIComponent(vendorId)}&dish=${encodeURIComponent(dishReference)}`;
                     return `
                     <article class="menu-item">
-                        <a class="menu-item-photo" href="dish.html?vendor=${encodeURIComponent(vendorId)}&dish=${encodeURIComponent(slugify(item.name))}" aria-label="View ${item.name}">
-                            <img src="${itemDetails.photo}" alt="${item.name}">
+                        <a class="menu-item-photo" href="${dishUrl}" aria-label="View ${escapeHtml(item.name)}">
+                            <img src="${escapeHtml(itemDetails.photo)}" alt="${escapeHtml(item.name)}">
                         </a>
                         <div class="menu-item-copy">
                             <div>
-                                <a class="menu-item-link" href="dish.html?vendor=${encodeURIComponent(vendorId)}&dish=${encodeURIComponent(slugify(item.name))}">
-                                    <h3>${item.name}</h3>
+                                <a class="menu-item-link" href="${dishUrl}">
+                                    <h3>${escapeHtml(item.name)}</h3>
                                 </a>
-                                <p>${item.description}</p>
+                                <p>${escapeHtml(item.description)}</p>
                                 <strong>${formatShillings(item.price)}</strong>
                             </div>
                             <div class="menu-actions">
-                                <a class="dish-details-button" href="dish.html?vendor=${encodeURIComponent(vendorId)}&dish=${encodeURIComponent(slugify(item.name))}">View Details</a>
-                                <button class="menu-add-button" type="button" data-name="${item.name}" data-price="${item.price}" data-image="${itemDetails.photo}">Add to Cart</button>
+                                <a class="dish-details-button" href="${dishUrl}">View Details</a>
+                                <button class="menu-add-button" type="button" data-name="${escapeHtml(item.name)}" data-price="${item.price}" data-image="${escapeHtml(itemDetails.photo)}" data-menu-item-id="${escapeHtml(item.menuItemId || "")}" ${shop.isPartner && !shop.isOpen ? "disabled" : ""}>${shop.isPartner && !shop.isOpen ? "Not accepting orders" : "Add to Cart"}</button>
                             </div>
                         </div>
                     </article>
@@ -1966,10 +2077,13 @@ function initShopPage() {
         const item = {
             name: button.dataset.name,
             price: Number(button.dataset.price),
-            image: button.dataset.image
+            image: button.dataset.image,
+            menuItemId: button.dataset.menuItemId || undefined,
+            vendorOwnerId: shop.isPartner ? vendorId.slice("partner-".length) : undefined,
+            shopId: shop.isPartner ? undefined : vendorId
         };
-
-        updateShopCartBar(addItemToCart(item), item.name);
+        const updated = addItemToCart(item);
+        if (updated) updateShopCartBar(updated, item.name);
     });
 
     cartBar.addEventListener("click", () => {
@@ -1996,6 +2110,11 @@ function initDishPage() {
     const vendorId = params.get("vendor") || "bibis";
     const dishSlug = params.get("dish") || "";
     const { shop, item } = findDish(vendorId, dishSlug);
+    if (!shop || !item) {
+        title.textContent = "Meal unavailable";
+        detail.innerHTML = '<p class="empty-state visible">This meal is not available right now. Browse other kitchens on the home page.</p>';
+        return;
+    }
     const details = getDishDetails(item, shop);
 
     function updateDishCartBar(items = getCart(), latestName = "") {
@@ -2009,6 +2128,32 @@ function initDishPage() {
     title.textContent = item.name;
     if (backLink) {
         backLink.href = `shop.html?vendor=${encodeURIComponent(vendorId)}`;
+    }
+
+    if (shop.isPartner) {
+        detail.innerHTML = `
+            <img class="dish-photo" src="${escapeHtml(details.photo)}" alt="${escapeHtml(item.name)}">
+            <div class="dish-copy">
+                <span class="location-kicker">${escapeHtml(shop.name)} - ${escapeHtml(item.category)}</span>
+                <h2>${escapeHtml(item.name)}</h2>
+                <p>${escapeHtml(item.description)}</p>
+                <div class="dish-price-row"><strong>${formatShillings(item.price)}</strong></div>
+                <button class="place-order-button" type="button" id="dish-add-button" ${shop.isOpen ? "" : "disabled"}>${shop.isOpen ? "Add to Cart" : "Not accepting orders"}</button>
+            </div>
+        `;
+        detail.querySelector("#dish-add-button").addEventListener("click", () => {
+            const updated = addItemToCart({
+                name: item.name,
+                price: item.price,
+                image: details.photo,
+                menuItemId: item.menuItemId,
+                vendorOwnerId: item.vendorOwnerId
+            });
+            if (updated) updateDishCartBar(updated, item.name);
+        });
+        cartBar.addEventListener("click", () => { window.location.href = "cart.html"; });
+        updateDishCartBar();
+        return;
     }
 
     detail.innerHTML = `
@@ -2056,10 +2201,12 @@ function initDishPage() {
             price: item.price + addOnTotal,
             image: details.photo,
             baseName: item.name,
-            addOns: addOnNames
+            addOns: addOnNames,
+            shopId: vendorId
         };
 
-        updateDishCartBar(addItemToCart(cartItem), cartItem.name);
+        const updated = addItemToCart(cartItem);
+        if (updated) updateDishCartBar(updated, cartItem.name);
     });
 
     cartBar.addEventListener("click", () => {
@@ -2101,17 +2248,18 @@ function initCartPage() {
         items.forEach((item) => {
             const row = document.createElement("article");
             row.className = "checkout-item";
+            const itemKey = escapeHtml(cartItemKey(item));
             row.innerHTML = `
                 <img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}">
                 <div class="checkout-item-info">
                     <h3>${escapeHtml(item.name)}</h3>
                     <p>${formatShillings(item.price)} each</p>
                     <div class="quantity-controls" aria-label="Quantity controls for ${escapeHtml(item.name)}">
-                        <button type="button" data-action="decrease" data-name="${escapeHtml(item.name)}">-</button>
+                        <button type="button" data-action="decrease" data-cart-key="${itemKey}">-</button>
                         <span>${Number(item.quantity)}</span>
-                        <button type="button" data-action="increase" data-name="${escapeHtml(item.name)}">+</button>
+                        <button type="button" data-action="increase" data-cart-key="${itemKey}">+</button>
                     </div>
-                    <button class="remove-cart-item" type="button" data-action="remove" data-name="${escapeHtml(item.name)}">Remove</button>
+                    <button class="remove-cart-item" type="button" data-action="remove" data-cart-key="${itemKey}">Remove</button>
                 </div>
                 <strong>${formatShillings(item.price * item.quantity)}</strong>
             `;
@@ -2133,10 +2281,10 @@ function initCartPage() {
         }
 
         if (button.dataset.action === "remove") {
-            saveCart(getCart().filter((item) => item.name !== button.dataset.name));
+            saveCart(getCart().filter((item) => cartItemKey(item) !== button.dataset.cartKey));
         } else {
             const change = button.dataset.action === "increase" ? 1 : -1;
-            updateItemQuantity(button.dataset.name, change);
+            updateItemQuantity(button.dataset.cartKey, change);
         }
         renderCart();
     });
@@ -2174,6 +2322,10 @@ function initCartPage() {
     placeOrderButton.addEventListener("click", async () => {
         const items = getCart();
         if (!items.length) {
+            return;
+        }
+        if (new Set(items.map(cartKitchenKey)).size !== 1) {
+            window.showAppStatus?.("Your cart contains meals from different kitchens. Keep one kitchen per order.", true);
             return;
         }
 
@@ -2488,7 +2640,7 @@ function initVendorDashboardPhase() {
                     <h2>${escapeHtml(vendorProfile.kitchenName || applicationFields.businessName || "My Vendor Dashboard")}</h2>
                     <p class="support-copy">Manage the menu customers will see, your order availability, and kitchen details.</p>
                 </div>
-                <span class="status-badge ${vendorProfile.acceptingOrders === false ? "status-cancelled" : "status-delivered"}" id="vendor-open-status">${vendorProfile.acceptingOrders === false ? "Not accepting orders" : "Accepting orders"}</span>
+                <span class="status-badge ${vendorProfile.acceptingOrders === true ? "status-delivered" : "status-cancelled"}" id="vendor-open-status">${vendorProfile.acceptingOrders === true ? "Accepting orders" : "Not accepting orders"}</span>
             </article>
             <article class="account-card">
                 <div class="account-card-heading">
@@ -2527,7 +2679,7 @@ function initVendorDashboardPhase() {
                     <label class="field-label">Kitchen name<input class="text-field" name="kitchenName" required value="${escapeHtml(vendorProfile.kitchenName || applicationFields.businessName || "Mama Meals Partner Kitchen")}"></label>
                     <label class="field-label">Service area<input class="text-field" name="serviceArea" required value="${escapeHtml(vendorProfile.serviceArea || applicationFields.serviceArea || getSelectedLocation())}"></label>
                     <label class="field-label">About your kitchen<textarea class="text-field compact-textarea" name="about" required>${escapeHtml(vendorProfile.about || applicationFields.experience || "Fresh local meals prepared with care.")}</textarea></label>
-                    <label class="settings-row"><span>Accepting orders</span><input type="checkbox" name="acceptingOrders" ${vendorProfile.acceptingOrders === false ? "" : "checked"}></label>
+                    <label class="settings-row"><span>Accepting orders</span><input type="checkbox" name="acceptingOrders" ${vendorProfile.acceptingOrders === true ? "checked" : ""}></label>
                     <button class="secondary-link" type="submit">Save Kitchen Profile</button>
                     <p class="auth-message" data-vendor-profile-message hidden></p>
                 </form>
@@ -2944,6 +3096,15 @@ initGlobalFeedback();
 async function initializeMamaMeals() {
     const backend = getFirebaseBackend();
     if (backend) await backend.ready;
+
+    if (backend?.state.configured && document.querySelector("#vendor-list, #shop-hero, #dish-detail")) {
+        try {
+            await backend.loadMarketplace();
+            renderMarketplaceVendors();
+        } catch (error) {
+            window.showAppStatus?.("Partner kitchens could not load. Please refresh to try again.", true);
+        }
+    }
 
     initAccountPrototype();
     initAuthHeader();

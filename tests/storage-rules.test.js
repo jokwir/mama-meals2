@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { randomUUID } = require("node:crypto");
 const { assertFails, assertSucceeds, initializeTestEnvironment } = require("@firebase/rules-unit-testing");
-const { collection, doc, getDoc, getDocs, limit, query, setDoc, Timestamp, updateDoc, where } = require("firebase/firestore");
+const { collection, deleteDoc, doc, getDoc, getDocs, limit, query, setDoc, Timestamp, updateDoc, where } = require("firebase/firestore");
 const { deleteObject, getBytes, getDownloadURL, getMetadata, listAll, ref, uploadBytes } = require("firebase/storage");
 
 const projectId = "demo-mama-meals-storage-rules";
@@ -175,6 +175,45 @@ test("public menu images remain usable while private application images are unre
   }));
 });
 
+test("public marketplace queries expose only available items and approved kitchens", async () => {
+  const vendorId = `vendor${randomUUID().replace(/-/g, "").slice(0, 20)}`;
+  const itemId = applicationId();
+  const hiddenId = applicationId();
+  await env.withSecurityRulesDisabled(async (context) => {
+    const firestore = context.firestore();
+    await setDoc(doc(firestore, "vendors", vendorId), { ownerId: vendorId, status: "approved" });
+    await setDoc(doc(firestore, "menuItems", itemId), { vendorOwnerId: vendorId, available: true, name: "Pilau" });
+    await setDoc(doc(firestore, "menuItems", hiddenId), { vendorOwnerId: vendorId, available: false, name: "Hidden" });
+  });
+  const publicDb = env.unauthenticatedContext().firestore();
+  await assertSucceeds(getDocs(query(collection(publicDb, "menuItems"), where("available", "==", true), limit(100))));
+  await assertSucceeds(getDocs(query(collection(publicDb, "vendors"), where("status", "==", "approved"), limit(100))));
+  await assertFails(getDoc(doc(publicDb, "menuItems", hiddenId)));
+  await assertFails(getDocs(query(collection(publicDb, "menuItems"), limit(100))));
+  const owner = env.authenticatedContext(vendorId, { vendor: true, email_verified: true }).firestore();
+  await assertFails(updateDoc(doc(owner, "menuItems", itemId), { price: 1, vendorOwnerId: "other" }));
+  await assertFails(setDoc(doc(owner, "menuItems", applicationId()), { vendorOwnerId: vendorId, available: true }));
+});
+
+test("only the approved owner can read a vendor order queue", async () => {
+  const ownerId = `owner${randomUUID().replace(/-/g, "").slice(0, 20)}`;
+  const otherId = `other${randomUUID().replace(/-/g, "").slice(0, 20)}`;
+  const orderId = applicationId();
+  await env.withSecurityRulesDisabled(async (context) => {
+    const firestore = context.firestore();
+    await setDoc(doc(firestore, "vendors", ownerId), { status: "approved", ownerId });
+    await setDoc(doc(firestore, "vendors", otherId), { status: "approved", ownerId: otherId });
+    await setDoc(doc(firestore, "orders", orderId), { vendorOwnerId: ownerId, customerId: "customer" });
+  });
+  const ownerDb = env.authenticatedContext(ownerId, { vendor: true, email_verified: true }).firestore();
+  const otherDb = env.authenticatedContext(otherId, { vendor: true, email_verified: true }).firestore();
+  await assertSucceeds(getDoc(doc(ownerDb, "orders", orderId)));
+  await assertSucceeds(getDocs(query(collection(ownerDb, "orders"), where("vendorOwnerId", "==", ownerId), limit(100))));
+  await assertFails(getDoc(doc(otherDb, "orders", orderId)));
+  await assertFails(getDocs(query(collection(otherDb, "orders"), where("vendorOwnerId", "==", ownerId), limit(100))));
+  await assertFails(updateDoc(doc(ownerDb, "orders", orderId), { status: "Delivered" }));
+});
+
 test("a vendor cannot overwrite another approved vendor's menu object", async () => {
   await env.withSecurityRulesDisabled(async (context) => {
     await setDoc(doc(context.firestore(), "vendors", "vendor-owner"), { status: "approved", ownerId: "vendor-owner" });
@@ -248,6 +287,9 @@ test("admin claims need the server-owned emergency gate and cannot alter authori
   const id = await draft("alice", "cook", "pending");
   const reviewer = env.authenticatedContext("gate-reviewer", { admin: true, email_verified: true }).firestore();
   const applicant = env.authenticatedContext("alice", { email_verified: true }).firestore();
+  await env.withSecurityRulesDisabled(async (context) => {
+    await deleteDoc(doc(context.firestore(), "adminSecurity", "global"));
+  });
   await assertFails(getDoc(doc(reviewer, "applications", id)));
   await env.withSecurityRulesDisabled(async (context) => {
     await setDoc(doc(context.firestore(), "adminSecurity", "global"), {

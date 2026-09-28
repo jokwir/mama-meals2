@@ -12,6 +12,9 @@ const frontendFiles = [
 ];
 const frontend = frontendFiles.map(read).join("\n");
 const app = read("assets/js/app.js");
+if (!app.includes('nav.querySelector(".auth-greeting").textContent = `Hi ${getFirstName(profile)}`;')) {
+  failures.push("Account greeting must render profile names as text, not HTML.");
+}
 const uiWithoutFirebaseClient = frontendFiles.filter((file) => file !== "assets/js/firebase-client.js").map(read).join("\n");
 const firestoreRules = read("firebase/firestore.rules");
 const storageRules = read("firebase/storage.rules");

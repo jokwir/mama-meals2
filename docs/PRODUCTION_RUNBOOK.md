@@ -9,6 +9,9 @@ documents for smoke tests.
 
 ## Verified production checkpoint (2026-09-27)
 
+This is a historical checkpoint. The Scheduler update below supersedes its
+statements about the job and maintenance endpoint.
+
 - Six reviewed Firestore composite indexes are enabled. Firestore and Storage
   rules match the locally emulator-tested source. The Storage service agent has
   the Firestore Rules service-agent role; bucket Public Access Prevention is
@@ -43,6 +46,20 @@ documents for smoke tests.
 - No Netlify release, production test application, sensitive upload, real ID
   document, or Scheduler job was created at this checkpoint. The working
   `dist/` remains untouched.
+
+## Scheduler checkpoint (2026-09-28)
+
+- `mamameals-hourly-application-maintenance` is enabled in `europe-west1` at
+  `0 * * * *` UTC, with zero retry attempts. It sends an empty authenticated
+  POST to the private Johannesburg `cleanupAbandonedApplications` Function.
+- The Function's sole `Cloud Run Invoker` member is the dedicated Scheduler
+  service account. Its deploy environment must include
+  `APPLICATION_MAINTENANCE_INVOKER_EMAIL` for that exact account; deploying
+  with `invoker: private` removes the service-scoped grant.
+- A forced execution succeeded (HTTP 204) after the empty parsed request-body
+  compatibility fix. Keep checking subsequent hourly executions and maintenance
+  failure markers before opening public application intake. No Netlify release
+  or real applicant documents were involved in this verification.
 
 Ruleset IDs recorded at this checkpoint (reverify live releases before any
 rollback; restoring deny-all rules would intentionally stop application access):
@@ -165,8 +182,9 @@ separate production decisions.
 ## Region and endpoint plan (no migration authorized)
 
 The source fallback remains `europe-west1` (Belgium), but the project-scoped
-Functions environment and Netlify production context now target
-`africa-south1` (Johannesburg), matching Firestore and Storage. No Functions
+Functions environment and the repository's `netlify.toml` production context
+target `africa-south1` (Johannesburg), matching Firestore and Storage. The
+current Netlify Drop site does not build from that file. No Functions
 were deployed before this initial-region choice, so this is not a migration.
 Keep both deployed runtimes and the web build on the same reviewed region.
 Firebase supports second-generation Functions in `africa-south1`.
@@ -335,32 +353,29 @@ rules before any approved migration.
     menu-image isolation. Verify notice remains unconfirmed without real
     delivery evidence. Record test IDs and clean them only through reviewed
     server/admin procedures. No real ID scans.
-16. **Activate maintenance in separately reviewed gates.** Cloud Scheduler
-    cannot create a job in `africa-south1`. The local candidate contains a
-    `cleanupAbandonedApplications` HTTP Function with `invoker: private`, one
-    instance, one concurrent request and a 120-second timeout. It accepts only
-    empty POST requests; the maintenance tasks still run in Johannesburg. The
-    endpoint-only deployment is complete and anonymous POST returned 403.
-    The dedicated, keyless invoker service account now exists and has
-    `roles/run.invoker` on this Function only, as verified in its Cloud Run
-    permissions panel. Recheck project-wide IAM grants because that separate
-    page did not load during verification. Next, subject to separate approval,
-    create exactly one hourly
-    HTTP Scheduler job in a supported region, with OIDC audience equal to the
-    Function URL, that service account, no applicant data/body and no immediate
-    retry storm. Verify the job identity, one successful execution, bounded
-    cost and failure logging before opening intake. Never grant `allUsers` or
-    `allAuthenticatedUsers` invocation. **Rollback point:** pause the job;
-    never loosen private rules to make it run.
-17. **Configure and release Netlify.** Confirm the intended site/domain,
-    authorized Auth domains and all six public Firebase Web App build variables.
-    The local candidate is not yet committed or pushed; Netlify's GitHub build
-    cannot publish it until a separately reviewed release commit is pushed to
-    the connected branch. Review the full dirty worktree before that commit,
-    including tracked `dist/` changes, and confirm the Netlify site really
-    builds from `jokwir/mama-meals2` `main`. Publish the matching reviewed
-    source through Netlify's clean build, not this working `dist/`. A successful
-    build is not proof that email, payments or real fulfillment are live.
+16. **Monitor activated maintenance.** The hourly OIDC Scheduler job in
+    `europe-west1` now invokes the private Johannesburg Function successfully.
+    Its first automatic run at 2026-09-28 17:00 UTC finished with HTTP 204;
+    the earlier force-run also succeeded. Continue monitoring subsequent runs.
+    Its source definition names the dedicated invoker service account through
+    `APPLICATION_MAINTENANCE_INVOKER_EMAIL`, checked by production preflight.
+    A future Function deployment must preserve that variable and verify the
+    sole `Cloud Run Invoker` binding afterwards. Confirm subsequent scheduled
+    runs, bounded cost and failure logging before opening intake. Never grant
+    `allUsers` or `allAuthenticatedUsers` invocation. **Rollback point:** pause
+    the job; never loosen private rules to make it run.
+17. **Configure and release Netlify.** The intended test site is
+    `mamamealstest2.netlify.app`. As checked on 2026-09-28, it was last
+    published through Netlify Drop on June 9, is not connected to this GitHub
+    repository, and has no project environment variables. Pushing `main` will
+    not publish to this site. Confirm the domain, authorized Auth domains and
+    all six public Firebase Web App build values. Review the dirty worktree
+    before committing. Choose and separately review either connecting this
+    site to `jokwir/mama-meals2` `main` with a clean Netlify build, or manually
+    uploading an isolated production build made from the reviewed source and
+    verified configuration. Never upload the stale working `dist/`. Record the
+    previous deploy ID before release. A successful build is not proof that
+    email, payments or real fulfillment are live.
     **Rollback point:** republish the recorded prior Netlify deploy if the
     frontend fails, then assess backend compatibility before rolling it back.
 18. **Post-launch monitoring.** On desktop and small mobile screens, test login,

@@ -1,6 +1,6 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-const { createMaintenanceHandler } = require("../functions/maintenance-http");
+const { createMaintenanceHandler, maintenanceInvoker } = require("../functions/maintenance-http");
 const { cleanupAbandonedApplications } = require("../functions/index.js");
 
 function response() {
@@ -21,6 +21,15 @@ test("maintenance endpoint is private, bounded and not an automatic regional sch
   assert.equal(endpoint.timeoutSeconds, 120);
 });
 
+test("maintenance invoker defaults private and only accepts the dedicated scheduler identity", () => {
+  const email = "mamameals-scheduler-invoker@mamameal-8946b.iam.gserviceaccount.com";
+  assert.equal(maintenanceInvoker({}), "private");
+  assert.equal(maintenanceInvoker({ APPLICATION_MAINTENANCE_INVOKER_EMAIL: email }), email);
+  for (const invalid of ["public", "allUsers", "admin@example.com", "other@mamameal-8946b.iam.gserviceaccount.com"]) {
+    assert.throws(() => maintenanceInvoker({ APPLICATION_MAINTENANCE_INVOKER_EMAIL: invalid }));
+  }
+});
+
 test("maintenance HTTP boundary rejects reads and data-bearing requests without work", async () => {
   let runs = 0;
   const handle = createMaintenanceHandler(async () => { runs += 1; });
@@ -31,6 +40,9 @@ test("maintenance HTTP boundary rejects reads and data-bearing requests without 
   const body = response();
   await handle({ method: "POST", body: { applicationId: "private" } }, body);
   assert.equal(body.code, 400);
+  const rawBody = response();
+  await handle({ method: "POST", rawBody: Buffer.from("{}"), body: {} }, rawBody);
+  assert.equal(rawBody.code, 400);
   assert.equal(runs, 0);
 });
 
@@ -47,5 +59,11 @@ test("maintenance HTTP boundary reports successful work and retryable failure wi
   const succeeded = response();
   await handle({ method: "POST", body: "" }, succeeded);
   assert.equal(succeeded.code, 204);
-  assert.equal(runs, 2);
+  const scheduler = response();
+  await handle({ method: "POST", rawBody: Buffer.alloc(0), body: {} }, scheduler);
+  assert.equal(scheduler.code, 204);
+  const parsedScheduler = response();
+  await handle({ method: "POST", body: {} }, parsedScheduler);
+  assert.equal(parsedScheduler.code, 204);
+  assert.equal(runs, 4);
 });

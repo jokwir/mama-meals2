@@ -71,6 +71,9 @@ if (process.argv.includes("--production-config")) {
     "Functions deployment environment contains a Firebase-reserved key");
   assert.equal(deployEnv.APPLICATION_FUNCTIONS_REGION, runtime.region,
     "Functions deployment and web build regions do not match");
+  assert.equal(deployEnv.APPLICATION_MAINTENANCE_INVOKER_EMAIL,
+    `mamameals-scheduler-invoker@${expectedProject}.iam.gserviceaccount.com`,
+    "Functions deployment must preserve the dedicated Scheduler invoker");
   const deployRetention = retentionWorkflow.configuredRetentionDays(deployEnv);
   assert.deepEqual(retentionWorkflow.missingRetentionClasses(deployRetention), [],
     "Functions deployment environment is missing document retention classes");

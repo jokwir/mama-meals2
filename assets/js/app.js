@@ -500,6 +500,10 @@ function cartItemKey(item) {
 }
 
 function addItemToCart(item) {
+    if (!item.menuItemId || !item.vendorOwnerId) {
+        window.showAppStatus?.("This sample meal is not available to order. Choose a published partner menu item.", true);
+        return null;
+    }
     let items = getCart();
     if (items.length && items.some((cartItem) => cartKitchenKey(cartItem) !== cartKitchenKey(item))) {
         if (!window.confirm("Start a new cart for this kitchen? Your current cart will be replaced.")) return null;
@@ -2029,6 +2033,7 @@ function initShopPage() {
                 <div><strong>Service area</strong><span>${escapeHtml(shop.serviceArea)}</span></div>
                 <div><strong>About</strong><span>${escapeHtml(shop.about)}</span></div>
             </div>
+            ${shop.isPartner ? "" : '<p class="support-copy">Sample menu for browsing. Ordering opens when an approved kitchen publishes its menu.</p>'}
         </div>
     `;
 
@@ -2058,7 +2063,7 @@ function initShopPage() {
                             </div>
                             <div class="menu-actions">
                                 <a class="dish-details-button" href="${dishUrl}">View Details</a>
-                                <button class="menu-add-button" type="button" data-name="${escapeHtml(item.name)}" data-price="${item.price}" data-image="${escapeHtml(itemDetails.photo)}" data-menu-item-id="${escapeHtml(item.menuItemId || "")}" ${shop.isPartner && !shop.isOpen ? "disabled" : ""}>${shop.isPartner && !shop.isOpen ? "Not accepting orders" : "Add to Cart"}</button>
+                                ${shop.isPartner ? `<button class="menu-add-button" type="button" data-name="${escapeHtml(item.name)}" data-price="${item.price}" data-image="${escapeHtml(itemDetails.photo)}" data-menu-item-id="${escapeHtml(item.menuItemId || "")}" ${shop.isOpen ? "" : "disabled"}>${shop.isOpen ? "Add to Cart" : "Not accepting orders"}</button>` : '<span class="support-copy">Sample menu only</span>'}
                             </div>
                         </div>
                     </article>
@@ -2176,38 +2181,9 @@ function initDishPage() {
                     <ul>${details.options.map((option) => `<li>${option}</li>`).join("")}</ul>
                 </section>
             </div>
-            <section class="dish-addons">
-                <h3>Add-ons</h3>
-                <div>
-                    ${details.addOns.map((addOn) => `
-                        <label class="addon-row">
-                            <input type="checkbox" data-addon-name="${addOn.name}" data-addon-price="${addOn.price}">
-                            <span>${addOn.name}</span>
-                            <strong>${formatShillings(addOn.price)}</strong>
-                        </label>
-                    `).join("")}
-                </div>
-            </section>
-            <button class="place-order-button" type="button" id="dish-add-button">Add to Cart</button>
+            <p class="support-copy">Sample menu for browsing. Ordering opens when an approved kitchen publishes its menu.</p>
         </div>
     `;
-
-    detail.querySelector("#dish-add-button").addEventListener("click", () => {
-        const selectedAddOns = Array.from(detail.querySelectorAll("[data-addon-name]:checked"));
-        const addOnTotal = selectedAddOns.reduce((total, input) => total + Number(input.dataset.addonPrice || 0), 0);
-        const addOnNames = selectedAddOns.map((input) => input.dataset.addonName);
-        const cartItem = {
-            name: addOnNames.length ? `${item.name} + ${addOnNames.join(", ")}` : item.name,
-            price: item.price + addOnTotal,
-            image: details.photo,
-            baseName: item.name,
-            addOns: addOnNames,
-            shopId: vendorId
-        };
-
-        const updated = addItemToCart(cartItem);
-        if (updated) updateDishCartBar(updated, cartItem.name);
-    });
 
     cartBar.addEventListener("click", () => {
         window.location.href = "cart.html";
@@ -2224,6 +2200,7 @@ function initCartPage() {
     const checkoutDelivery = document.querySelector("#checkout-delivery");
     const checkoutTotal = document.querySelector("#checkout-total");
     const placeOrderButton = document.querySelector("#place-order");
+    const cartOrderNotice = document.querySelector("#cart-order-notice");
     const confirmationScreen = document.querySelector("#confirmation-screen");
     const confirmationCopy = document.querySelector("#confirmation-copy");
     const trackOrderLink = document.querySelector("#track-order-link");
@@ -2271,7 +2248,9 @@ function initCartPage() {
         checkoutDelivery.textContent = itemCount > 0 ? formatShillings(deliveryFee) : formatShillings(0);
         checkoutTotal.textContent = formatShillings(total);
         checkoutEmpty.classList.toggle("visible", itemCount === 0);
-        placeOrderButton.disabled = itemCount === 0;
+        const hasSampleItems = items.some((item) => !item.menuItemId || !item.vendorOwnerId);
+        if (cartOrderNotice) cartOrderNotice.hidden = !hasSampleItems;
+        placeOrderButton.disabled = itemCount === 0 || hasSampleItems;
     }
 
     checkoutItems.addEventListener("click", (event) => {
@@ -2322,6 +2301,10 @@ function initCartPage() {
     placeOrderButton.addEventListener("click", async () => {
         const items = getCart();
         if (!items.length) {
+            return;
+        }
+        if (items.some((item) => !item.menuItemId || !item.vendorOwnerId)) {
+            window.showAppStatus?.("Remove sample meals and choose items from a published partner menu.", true);
             return;
         }
         if (new Set(items.map(cartKitchenKey)).size !== 1) {

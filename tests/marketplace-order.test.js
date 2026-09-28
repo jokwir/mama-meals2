@@ -77,7 +77,39 @@ test("mixed live vendors and live-plus-static carts are rejected", async () => {
   ])), /separate orders/);
   await assert.rejects(callables.createOrder.run(orderRequest([
     { menuItemId: first, quantity: 1 }, { name: "Mukimo Plate", baseName: "Mukimo Plate", quantity: 1 }
-  ])), /separate orders/);
+  ])), /published by an approved vendor/);
+});
+
+test("sample-only and forged-owner orders cannot create unowned orders", async () => {
+  const customerId = id("customer");
+  await assert.rejects(callables.createOrder.run(orderRequest([
+    { name: "Mukimo Plate", baseName: "Mukimo Plate", vendorOwnerId: id("vendor"), quantity: 1 }
+  ], customerId)), /published by an approved vendor/);
+  await assert.rejects(callables.createOrder.run(orderRequest([
+    { menuItemId: id("MissingMenu"), vendorOwnerId: id("vendor"), quantity: 1 }
+  ], customerId)), /no longer available/);
+  const orders = await db.collection("orders").where("customerId", "==", customerId).get();
+  assert.equal(orders.size, 0);
+});
+
+test("orders require a menu item owned by a real approved accepting vendor", async () => {
+  const missingOwner = await menuItem(id("missingVendor"));
+  await assert.rejects(callables.createOrder.run(orderRequest([
+    { menuItemId: missingOwner, quantity: 1 }
+  ])), /not accepting orders/);
+
+  const owner = await approvedVendor();
+  const itemId = await menuItem(owner);
+  await db.doc(`menuItems/${itemId}`).update({ vendorOwnerId: "" });
+  await assert.rejects(callables.createOrder.run(orderRequest([
+    { menuItemId: itemId, quantity: 1 }
+  ])), /no approved vendor/);
+
+  await db.doc(`menuItems/${itemId}`).update({ vendorOwnerId: owner });
+  await db.doc(`vendors/${owner}`).update({ ownerId: id("otherOwner") });
+  await assert.rejects(callables.createOrder.run(orderRequest([
+    { menuItemId: itemId, quantity: 1 }
+  ])), /not accepting orders/);
 });
 
 test("unavailable items or kitchens not accepting orders cannot be checked out", async () => {

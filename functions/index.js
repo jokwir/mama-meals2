@@ -52,55 +52,6 @@ function requiredRetentionPolicy() {
   return policy;
 }
 
-const staticPrices = new Map(Object.entries({
-  "Mukimo Plate": 350,
-  "Githeri Bowl": 320,
-  "Beef Stew Meal": 420,
-  "Sukuma Wiki": 120,
-  Kachumbari: 90,
-  "Fresh Passion Juice": 150,
-  "Bottled Water": 80,
-  Mandazi: 70,
-  "Roasted Groundnuts": 100,
-  "Chapati and Beans": 200,
-  "Chapati and Beef Stew": 380,
-  "Chapati Wrap": 260,
-  "Extra Chapati": 70,
-  "Bean Stew Side": 120,
-  "Tangawizi Soda": 120,
-  "Mango Juice": 150,
-  Samosa: 90,
-  "Chapati Roll Bite": 110,
-  "Chicken Pilau": 450,
-  "Nyama Choma Plate": 650,
-  "Pilau and Kachumbari": 380,
-  "Ugali Side": 100,
-  "Kachumbari Side": 90,
-  "Fresh Tamarind Juice": 160,
-  "Beef Samosa": 90,
-  "Grilled Maize": 120,
-  "Fish and Ugali": 380,
-  "Ugali Sukuma Plate": 240,
-  "Tilapia Stew": 520,
-  "Extra Ugali": 80,
-  "Sukuma Side": 120,
-  "Sugarcane Juice": 160,
-  Lemonade: 140,
-  Bhajia: 180,
-  "Roasted Cassava": 130
-}));
-const staticAddOnPrices = new Map([
-  ["Extra stew", 80],
-  ["Extra chapati", 70],
-  ["Kachumbari side", 90]
-]);
-const staticImageByDish = new Map([
-  ["images/01_bibis_traditional_meals.png", ["Mukimo Plate", "Githeri Bowl", "Beef Stew Meal", "Sukuma Wiki", "Kachumbari", "Fresh Passion Juice", "Bottled Water", "Mandazi", "Roasted Groundnuts"]],
-  ["images/02_chapati_spot.png", ["Chapati and Beans", "Chapati and Beef Stew", "Chapati Wrap", "Extra Chapati", "Bean Stew Side", "Tangawizi Soda", "Mango Juice", "Samosa", "Chapati Roll Bite"]],
-  ["images/03_mama_sarahs_kitchen.png", ["Chicken Pilau", "Nyama Choma Plate", "Pilau and Kachumbari", "Ugali Side", "Kachumbari Side", "Fresh Tamarind Juice", "Beef Samosa", "Grilled Maize"]],
-  ["images/04_nairobi_delights.png", ["Fish and Ugali", "Ugali Sukuma Plate", "Tilapia Stew", "Extra Ugali", "Sukuma Side", "Sugarcane Juice", "Lemonade", "Bhajia", "Roasted Cassava"]]
-].flatMap(([image, dishes]) => dishes.map((dish) => [dish, image])));
-
 function requireAuth(request) {
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "Sign in to continue.");
@@ -391,56 +342,43 @@ exports.setApplicationLegalHold = onCall(async (request) => {
   return protection.setLegalHold(db, caller, request.data?.applicationId, request.data?.action, request.data?.options);
 });
 
-async function resolveOrderItems(items) {
+async function resolveOrderItems(items, transaction) {
   if (!Array.isArray(items) || !items.length || items.length > 20) {
     throw new HttpsError("invalid-argument", "An order must contain between 1 and 20 items.");
   }
-  return Promise.all(items.map(async (item) => {
+  const resolved = [];
+  const vendors = new Map();
+  for (const item of items) {
     const quantity = Math.max(1, Math.min(50, Math.trunc(Number(item.quantity) || 1)));
     const menuItemId = cleanText(item.menuItemId, 80);
-    let name = cleanText(item.name, 120);
-    let baseName = cleanText(item.baseName, 120) || name;
     const addOns = Array.isArray(item.addOns) ? item.addOns.map((value) => cleanText(value, 80)) : [];
-    if (addOns.length > 3 || new Set(addOns).size !== addOns.length) {
-      throw new HttpsError("invalid-argument", "Invalid meal add-ons.");
+    if (!/^[A-Za-z0-9_-]{10,80}$/.test(menuItemId) || addOns.length) {
+      throw new HttpsError("invalid-argument", "Order items must be published by an approved vendor.");
     }
-    let price;
-    let image = "";
-    let vendorOwnerId = "";
-    if (menuItemId) {
-      if (addOns.length) throw new HttpsError("invalid-argument", "Vendor menu add-ons are not available yet.");
-      const snapshot = await db.doc(`menuItems/${menuItemId}`).get();
-      if (!snapshot.exists || snapshot.data().available !== true) {
-        throw new HttpsError("failed-precondition", "A selected menu item is no longer available.");
-      }
-      const menuItem = snapshot.data();
-      name = cleanText(menuItem.name, 120);
-      baseName = name;
-      price = Number(menuItem.price);
-      image = cleanText(menuItem.imageUrl || menuItem.imagePath, 500);
-      vendorOwnerId = cleanText(menuItem.vendorOwnerId, 128);
-      if (!vendorOwnerId) throw new HttpsError("failed-precondition", "The selected menu item has no approved vendor.");
-      const vendorSnapshot = await db.doc(`vendors/${vendorOwnerId}`).get();
-      if (!vendorSnapshot.exists || vendorSnapshot.data().status !== "approved" || vendorSnapshot.data().acceptingOrders !== true) {
+    const snapshot = await transaction.get(db.doc(`menuItems/${menuItemId}`));
+    if (!snapshot.exists || snapshot.data().available !== true) {
+      throw new HttpsError("failed-precondition", "A selected menu item is no longer available.");
+    }
+    const menuItem = snapshot.data();
+    const name = cleanText(menuItem.name, 120);
+    const price = Number(menuItem.price);
+    const image = cleanText(menuItem.imageUrl || menuItem.imagePath, 500);
+    const vendorOwnerId = cleanText(menuItem.vendorOwnerId, 128);
+    if (!vendorOwnerId) throw new HttpsError("failed-precondition", "The selected menu item has no approved vendor.");
+    if (!vendors.has(vendorOwnerId)) {
+      const vendorSnapshot = await transaction.get(db.doc(`vendors/${vendorOwnerId}`));
+      if (!vendorSnapshot.exists || vendorSnapshot.data().status !== "approved"
+          || vendorSnapshot.data().ownerId !== vendorOwnerId || vendorSnapshot.data().acceptingOrders !== true) {
         throw new HttpsError("failed-precondition", "The selected vendor is not accepting orders right now.");
       }
-    } else {
-      price = staticPrices.get(baseName);
-      image = staticImageByDish.get(baseName) || "images/01_bibis_traditional_meals.png";
-      if (name !== (addOns.length ? `${baseName} + ${addOns.join(", ")}` : baseName)) {
-        throw new HttpsError("invalid-argument", "Meal name and add-ons do not match.");
-      }
-      for (const addOn of addOns) {
-        if (addOn === "Extra bottle") price += staticPrices.get(baseName);
-        else if (staticAddOnPrices.has(addOn)) price += staticAddOnPrices.get(addOn);
-        else throw new HttpsError("invalid-argument", "An add-on is not available.");
-      }
+      vendors.set(vendorOwnerId, true);
     }
     if (!Number.isFinite(price) || price <= 0) {
       throw new HttpsError("invalid-argument", `Price could not be verified for ${name || "an item"}.`);
     }
-    return { menuItemId: menuItemId || null, name, baseName, addOns, unitPrice: price, price, quantity, image, vendorOwnerId: vendorOwnerId || null };
-  }));
+    resolved.push({ menuItemId, name, baseName: name, addOns: [], unitPrice: price, price, quantity, image, vendorOwnerId });
+  }
+  return resolved;
 }
 
 exports.createOrder = onCall(async (request) => {
@@ -454,12 +392,6 @@ exports.createOrder = onCall(async (request) => {
   if (deliveryAddress.length < 10 || phone.replace(/\D/g, "").length < 7) {
     throw new HttpsError("invalid-argument", "A complete delivery address and phone number are required.");
   }
-  const items = await resolveOrderItems(input.items);
-  const vendorIds = [...new Set(items.map((item) => item.vendorOwnerId).filter(Boolean))];
-  if (vendorIds.length > 1 || (vendorIds.length === 1 && items.some((item) => !item.vendorOwnerId))) {
-    throw new HttpsError("invalid-argument", "Place separate orders for items from different vendors.");
-  }
-  const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   const deliveryFee = 30;
   const paymentMethod = cleanText(input.paymentMethod, 80) || "M-Pesa";
   if (!allowedPaymentMethods.has(paymentMethod)) {
@@ -468,6 +400,12 @@ exports.createOrder = onCall(async (request) => {
   const dateKey = formatDateKey();
   const counterRef = db.doc(`systemCounters/orders-${dateKey}`);
   const order = await db.runTransaction(async (transaction) => {
+    const items = await resolveOrderItems(input.items, transaction);
+    const vendorIds = [...new Set(items.map((item) => item.vendorOwnerId))];
+    if (vendorIds.length !== 1) {
+      throw new HttpsError("invalid-argument", "Place separate orders for items from different vendors.");
+    }
+    const subtotal = items.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
     const counterSnapshot = await transaction.get(counterRef);
     const sequence = Number(counterSnapshot.data()?.value || 0) + 1;
     const orderId = `MM-${dateKey}-${String(sequence).padStart(3, "0")}`;
@@ -486,7 +424,7 @@ exports.createOrder = onCall(async (request) => {
       paymentMethod,
       paymentStatus: "pending",
       status: "Order Received - Preparing Soon",
-      vendorOwnerId: vendorIds[0] || null,
+      vendorOwnerId: vendorIds[0],
       assignedRiderId: null,
       dispatchOpen: true,
       createdAt: FieldValue.serverTimestamp(),

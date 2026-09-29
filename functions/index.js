@@ -397,9 +397,49 @@ exports.createOrder = onCall(async (request) => {
   if (!allowedPaymentMethods.has(paymentMethod)) {
     throw new HttpsError("invalid-argument", "Select a supported payment method.");
   }
+  if (!Array.isArray(input.items) || !input.items.length || input.items.length > 20) {
+    throw new HttpsError("invalid-argument", "An order must contain between 1 and 20 items.");
+  }
+  const requestId = cleanText(input.requestId, 80);
+  if (requestId && !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(requestId)) {
+    throw new HttpsError("invalid-argument", "Invalid checkout request identifier.");
+  }
+  const customerKey = crypto.createHash("sha256").update(caller.uid).digest("hex");
+  const requestRef = requestId ? db.doc(`orderRequests/${customerKey}_${requestId}`) : null;
+  const requestHash = requestRef ? crypto.createHash("sha256").update(JSON.stringify({
+    deliveryAddress,
+    phone,
+    paymentMethod,
+    deliveryInstructions: cleanText(input.deliveryInstructions, 1000),
+    notes: cleanText(input.notes, 1000),
+    items: input.items.map((item) => ({
+      menuItemId: cleanText(item?.menuItemId, 80),
+      quantity: item?.quantity,
+      hasAddOns: Array.isArray(item?.addOns) && item.addOns.length > 0
+    }))
+  })).digest("hex") : null;
   const dateKey = formatDateKey();
   const counterRef = db.doc(`systemCounters/orders-${dateKey}`);
   const order = await db.runTransaction(async (transaction) => {
+    if (requestRef) {
+      const previous = await transaction.get(requestRef);
+      if (previous.exists) {
+        if (previous.data().requestHash !== requestHash) {
+          throw new HttpsError("already-exists", "This checkout request was already used for another order.");
+        }
+        const previousOrder = await transaction.get(db.doc(`orders/${previous.data().orderId}`));
+        if (!previousOrder.exists || previousOrder.data().customerId !== caller.uid) {
+          throw new HttpsError("failed-precondition", "The previous checkout result is unavailable. Contact support before retrying.");
+        }
+        const previousRecord = previousOrder.data();
+        return {
+          id: previousOrder.id,
+          ...previousRecord,
+          createdAt: previousRecord.createdAt?.toDate?.().toISOString(),
+          updatedAt: previousRecord.updatedAt?.toDate?.().toISOString()
+        };
+      }
+    }
     const items = await resolveOrderItems(input.items, transaction);
     const vendorIds = [...new Set(items.map((item) => item.vendorOwnerId))];
     if (vendorIds.length !== 1) {
@@ -432,6 +472,12 @@ exports.createOrder = onCall(async (request) => {
     };
     transaction.set(counterRef, { value: sequence, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
     transaction.create(orderRef, record);
+    if (requestRef) transaction.create(requestRef, {
+      customerId: caller.uid,
+      orderId,
+      requestHash,
+      createdAt: FieldValue.serverTimestamp()
+    });
     return { id: orderId, ...record, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
   });
   return order;

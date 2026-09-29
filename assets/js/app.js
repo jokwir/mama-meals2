@@ -1,6 +1,8 @@
 const deliveryFee = 30;
 const cartStorageKey = "mamaMealsCart";
 const selectedLocationStorageKey = "mamaMealsSelectedLocation";
+const checkoutAttemptStorageKey = "mamaMealsCheckoutAttempt";
+let checkoutAttempt = null;
 
 const locationProfiles = {
     "Nairobi, Kenya": { feeAdjust: 0, timeAdjust: 0 },
@@ -367,6 +369,48 @@ function getCart() {
 
 function saveCart(items) {
     localStorage.setItem(cartStorageKey, JSON.stringify(items));
+}
+
+async function getCheckoutRequestId(order) {
+    const fingerprintSource = JSON.stringify({
+        userId: getFirebaseState().user.uid,
+        deliveryAddress: order.deliveryAddress,
+        phone: order.phone,
+        deliveryInstructions: order.deliveryInstructions,
+        notes: order.notes,
+        paymentMethod: order.paymentMethod,
+        items: order.items.map((item) => ({
+            menuItemId: item.menuItemId,
+            quantity: item.quantity,
+            addOns: item.addOns
+        }))
+    });
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(fingerprintSource));
+    const fingerprint = Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+    try {
+        checkoutAttempt = JSON.parse(sessionStorage.getItem(checkoutAttemptStorageKey)) || checkoutAttempt;
+    } catch {
+        // Private browsing can block storage; the in-memory attempt still protects retries in this tab.
+    }
+    if (checkoutAttempt?.fingerprint !== fingerprint
+        || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(checkoutAttempt.requestId || "")) {
+        checkoutAttempt = { fingerprint, requestId: crypto.randomUUID() };
+        try {
+            sessionStorage.setItem(checkoutAttemptStorageKey, JSON.stringify(checkoutAttempt));
+        } catch {
+            // Keep the attempt in memory when session storage is unavailable.
+        }
+    }
+    return checkoutAttempt.requestId;
+}
+
+function clearCheckoutAttempt() {
+    checkoutAttempt = null;
+    try {
+        sessionStorage.removeItem(checkoutAttemptStorageKey);
+    } catch {
+        // Checkout has already succeeded; a blocked session store cannot undo the order.
+    }
 }
 
 function getFirebaseBackend() {
@@ -2360,6 +2404,7 @@ function initCartPage() {
         };
         placeOrderButton.disabled = true;
         try {
+            order.requestId = await getCheckoutRequestId(order);
             const savedOrder = await getFirebaseBackend().createOrder(order);
             confirmationCopy.textContent = "Order received. Payment is not collected yet; track it in your Order History.";
             confirmationScreen.classList.add("visible");
@@ -2367,6 +2412,7 @@ function initCartPage() {
                 trackOrderLink.href = `order-tracking.html?order=${encodeURIComponent(savedOrder.id)}`;
             }
             saveCart([]);
+            clearCheckoutAttempt();
             renderCart();
         } catch (error) {
             window.showAppStatus?.(error.message || "The order could not be placed.", true);

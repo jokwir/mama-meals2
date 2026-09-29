@@ -214,6 +214,21 @@ test("only the approved owner can read a vendor order queue", async () => {
   await assertFails(updateDoc(doc(ownerDb, "orders", orderId), { status: "Delivered" }));
 });
 
+test("checkout retry records are server-owned and unreadable by clients", async () => {
+  const requestId = applicationId();
+  await env.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), "orderRequests", requestId), {
+      customerId: "customer", orderId: "MM-20260929-001", requestHash: "redacted"
+    });
+  });
+  const customerDb = env.authenticatedContext("customer", { email_verified: true }).firestore();
+  const publicDb = env.unauthenticatedContext().firestore();
+  await assertFails(getDoc(doc(customerDb, "orderRequests", requestId)));
+  await assertFails(getDocs(query(collection(customerDb, "orderRequests"), limit(10))));
+  await assertFails(setDoc(doc(customerDb, "orderRequests", applicationId()), { orderId: "forged" }));
+  await assertFails(getDoc(doc(publicDb, "orderRequests", requestId)));
+});
+
 test("a vendor cannot overwrite another approved vendor's menu object", async () => {
   await env.withSecurityRulesDisabled(async (context) => {
     await setDoc(doc(context.firestore(), "vendors", "vendor-owner"), { status: "approved", ownerId: "vendor-owner" });

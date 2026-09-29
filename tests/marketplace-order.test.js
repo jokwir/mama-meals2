@@ -35,10 +35,10 @@ async function menuItem(ownerId, available = true) {
   return itemId;
 }
 
-function orderRequest(items, customerId = id("customer")) {
+function orderRequest(items, customerId = id("customer"), requestId) {
   return { auth: { uid: customerId, token: { email_verified: true } }, data: { order: {
     deliveryAddress: "House 12, Nairobi Road, Kilimani", phone: "0700000000",
-    paymentMethod: "Cash on Delivery", items
+    paymentMethod: "Cash on Delivery", items, requestId
   } } };
 }
 
@@ -125,6 +125,53 @@ test("unavailable items or kitchens not accepting orders cannot be checked out",
   await db.doc(`vendors/${owner}`).update({ status: "suspended" });
   await assert.rejects(callables.createOrder.run(orderRequest([{ menuItemId: closedItem, quantity: 1 }])),
     /not accepting orders/);
+});
+
+test("a retried checkout returns the first order even after its menu item changes", async () => {
+  const owner = await approvedVendor();
+  const itemId = await menuItem(owner);
+  const customer = id("customer");
+  const requestId = randomUUID();
+  const request = orderRequest([{ menuItemId: itemId, quantity: 2 }], customer, requestId);
+  const first = await callables.createOrder.run(request);
+  await db.doc(`menuItems/${itemId}`).update({ available: false, price: 900 });
+  const second = await callables.createOrder.run(request);
+  assert.equal(second.id, first.id);
+  assert.equal(second.total, first.total);
+  const orders = await db.collection("orders").where("customerId", "==", customer).get();
+  assert.equal(orders.size, 1);
+});
+
+test("a checkout key cannot be reused for a changed order or another customer's order", async () => {
+  const owner = await approvedVendor();
+  const itemId = await menuItem(owner);
+  const requestId = randomUUID();
+  const firstCustomer = id("customer");
+  const first = orderRequest([{ menuItemId: itemId, quantity: 1 }], firstCustomer, requestId);
+  await callables.createOrder.run(first);
+  const changed = orderRequest([{ menuItemId: itemId, quantity: 2 }], firstCustomer, requestId);
+  await assert.rejects(callables.createOrder.run(changed), /already used/);
+  const otherCustomer = id("customer");
+  const other = await callables.createOrder.run(orderRequest(
+    [{ menuItemId: itemId, quantity: 1 }], otherCustomer, requestId
+  ));
+  assert.equal((await db.doc(`orders/${other.id}`).get()).data().customerId, otherCustomer);
+  assert.equal((await db.collection("orders").where("customerId", "==", firstCustomer).get()).size, 1);
+});
+
+test("concurrent and malformed checkout retries do not create extra orders", async () => {
+  const owner = await approvedVendor();
+  const itemId = await menuItem(owner);
+  const customer = id("customer");
+  const request = orderRequest([{ menuItemId: itemId, quantity: 1 }], customer, randomUUID());
+  const [first, second] = await Promise.all([
+    callables.createOrder.run(request), callables.createOrder.run(request)
+  ]);
+  assert.equal(first.id, second.id);
+  assert.equal((await db.collection("orders").where("customerId", "==", customer).get()).size, 1);
+  await assert.rejects(callables.createOrder.run(orderRequest(
+    [{ menuItemId: itemId, quantity: 1 }], customer, "not-a-uuid"
+  )), /Invalid checkout request identifier/);
 });
 
 test("customer or suspended vendor cannot publish or remove menu items", async () => {

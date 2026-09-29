@@ -466,7 +466,7 @@ exports.createOrder = onCall(async (request) => {
       status: "Order Received - Preparing Soon",
       vendorOwnerId: vendorIds[0],
       assignedRiderId: null,
-      dispatchOpen: true,
+      dispatchOpen: false,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp()
     };
@@ -489,10 +489,9 @@ exports.listAvailableDeliveries = onCall(async (request) => {
   if (!riderSnapshot.exists || riderSnapshot.data().status !== "approved" || riderSnapshot.data().available !== true) {
     throw new HttpsError("failed-precondition", "Set your approved rider profile to available to view delivery offers.");
   }
-  const snapshot = await db.collection("orders").where("dispatchOpen", "==", true).limit(50).get();
+  const snapshot = await db.collection("orders").where("status", "==", "Preparing Your Meal").limit(50).get();
   const offers = snapshot.docs
-    .filter((document) => !document.data().assignedRiderId
-      && new Set(["Order Received - Preparing Soon", "Preparing Your Meal"]).has(document.data().status))
+    .filter((document) => document.data().dispatchOpen === true && !document.data().assignedRiderId)
     .map((document) => ({ id: document.id, deliveryFee: document.data().deliveryFee || 30 }));
   return { offers };
 });
@@ -517,9 +516,10 @@ exports.updateOrderStatus = onCall(async (request) => {
     const updates = { updatedAt: FieldValue.serverTimestamp() };
     if (action === "preparing" && (vendor || admin) && order.status === "Order Received - Preparing Soon") {
       updates.status = "Preparing Your Meal";
+      updates.dispatchOpen = true;
     }
-    else if (action === "accept" && rider && !order.assignedRiderId
-        && new Set(["Order Received - Preparing Soon", "Preparing Your Meal"]).has(order.status)) {
+    else if (action === "accept" && rider && order.dispatchOpen === true && !order.assignedRiderId
+        && order.status === "Preparing Your Meal") {
       const userSnapshot = await transaction.get(db.doc(`users/${caller.uid}`));
       if (!riderSnapshot.exists || riderSnapshot.data().status !== "approved" || riderSnapshot.data().available !== true) {
         throw new HttpsError("failed-precondition", "Set your approved rider profile to available before accepting a delivery.");

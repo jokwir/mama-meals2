@@ -196,9 +196,31 @@ test("a trusted vendor order can be accepted and delivered by an approved rider"
   const owner = await approvedVendor();
   const itemId = await menuItem(owner);
   const order = await callables.createOrder.run(orderRequest([{ menuItemId: itemId, quantity: 1 }]));
+  const legacyPendingId = id("LegacyOrder");
+  await db.doc(`orders/${legacyPendingId}`).set({
+    vendorOwnerId: owner, status: "Order Received - Preparing Soon",
+    dispatchOpen: true, assignedRiderId: null, deliveryFee: 30
+  });
   const rider = id("rider");
   await db.doc(`riders/${rider}`).set({ ownerId: rider, status: "approved", available: true });
   const riderAuth = { uid: rider, token: { rider: true, email_verified: true } };
+  assert.equal((await db.doc(`orders/${order.id}`).get()).data().dispatchOpen, false);
+  const before = await callables.listAvailableDeliveries.run({ auth: riderAuth, data: {} });
+  assert.equal(before.offers.some((offer) => offer.id === order.id), false);
+  assert.equal(before.offers.some((offer) => offer.id === legacyPendingId), false);
+  await assert.rejects(callables.updateOrderStatus.run({
+    auth: riderAuth, data: { orderId: order.id, action: "accept" }
+  }), /cannot perform/);
+  await assert.rejects(callables.updateOrderStatus.run({
+    auth: riderAuth, data: { orderId: legacyPendingId, action: "accept" }
+  }), /cannot perform/);
+  await callables.updateOrderStatus.run({
+    auth: { uid: owner, token: { vendor: true, email_verified: true } },
+    data: { orderId: order.id, action: "preparing" }
+  });
+  assert.equal((await db.doc(`orders/${order.id}`).get()).data().dispatchOpen, true);
+  const after = await callables.listAvailableDeliveries.run({ auth: riderAuth, data: {} });
+  assert.equal(after.offers.some((offer) => offer.id === order.id), true);
   for (const action of ["accept", "start", "delivered"]) {
     await callables.updateOrderStatus.run({ auth: riderAuth, data: { orderId: order.id, action } });
   }

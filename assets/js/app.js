@@ -2752,7 +2752,7 @@ function initVendorDashboardPhase() {
                     ? `<button class="small-action-button" type="button" data-vendor-order-action="preparing" data-order-id="${escapeHtml(order.id)}">Start Preparing</button>`
                     : `<a class="text-action" href="order-tracking.html?order=${encodeURIComponent(order.id)}">View</a>`}
             </article>
-        `).join("") : `<p class="empty-state visible">No orders are assigned to this kitchen yet. Customer-to-vendor assignment starts when the live menu backend is connected.</p>`;
+        `).join("") : `<p class="empty-state visible">No orders are assigned to this kitchen yet. Orders from your published menu will appear here.</p>`;
 
         const delivered = orderList.filter((order) => String(order.status).includes("Delivered"));
         const gross = delivered.reduce((total, order) => total + Number(order.subtotal || order.total || 0), 0);
@@ -2760,7 +2760,7 @@ function initVendorDashboardPhase() {
         if (earnings) earnings.innerHTML = `
             <div><span>Completed orders</span><strong>${delivered.length}</strong></div>
             <div><span>Gross sales</span><strong>${formatShillings(gross)}</strong></div>
-            <div><span>Pending payout</span><strong>${formatShillings(0)}</strong></div>
+            <div><span>Payout status</span><strong>Not connected</strong></div>
         `;
     }
 
@@ -3029,7 +3029,7 @@ function initRiderDashboardPhase() {
         document.querySelector("#rider-earnings-summary").innerHTML = `
             <div><span>Completed trips</span><strong>${completed.length}</strong></div>
             <div><span>Recorded earnings</span><strong>${formatShillings(earnings)}</strong></div>
-            <div><span>Pending payout</span><strong>${formatShillings(earnings)}</strong></div>
+            <div><span>Payout status</span><strong>Not connected</strong></div>
         `;
     }
 

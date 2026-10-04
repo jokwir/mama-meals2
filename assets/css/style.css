@@ -2408,6 +2408,23 @@ main {
     padding: 16px 16px 110px;
 }
 
+main[data-vendor-dashboard] > .dashboard-shell {
+    grid-column: 1 / -1;
+    min-width: 0;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+main[data-vendor-dashboard] .dashboard-shell > *,
+main[data-vendor-dashboard] .dashboard-form > *,
+main[data-vendor-dashboard] .dashboard-hero-panel > div {
+    min-width: 0;
+}
+
+main[data-vendor-dashboard] .dashboard-hero-panel h2 {
+    overflow-wrap: anywhere;
+}
+
 .dashboard-hero-panel {
     display: flex;
     align-items: center;
@@ -3210,6 +3227,19 @@ main {
 .dashboard-item-actions button:first-child {
     background: #fff7f2;
     color: var(--primary);
+}
+
+.vendor-dashboard .dashboard-list-item {
+    min-width: 0;
+}
+
+.vendor-dashboard .dashboard-list-item > div:not(.dashboard-item-actions) {
+    min-width: 0;
+}
+
+.vendor-dashboard .dashboard-list-item strong,
+.vendor-dashboard .dashboard-list-item span {
+    overflow-wrap: anywhere;
 }
 
 .dashboard-list-item > .status-badge {

@@ -9,7 +9,7 @@
     "preflight:production": "node scripts/preflight-local.js --production-config",
     "build:isolated-check": "node scripts/isolated-build-check.js",
     "test:storage-rules": "firebase emulators:exec --config firebase.emulator.test.json --project demo-mama-meals-storage-rules --only firestore,storage \"node --test tests/storage-rules.test.js\"",
-    "test:firebase-security": "firebase emulators:exec --config firebase.emulator.test.json --project demo-mama-meals-storage-rules --only firestore,storage \"node --test --test-concurrency=1 tests/storage-rules.test.js tests/application-workflow.test.js tests/private-upload.test.js tests/review-retention.test.js tests/maintenance-tooling.test.js tests/maintenance-http.test.js tests/retention-safeguards.test.js tests/appeal-recovery.test.js tests/record-retention.test.js tests/marketplace-order.test.js\""
+    "test:firebase-security": "firebase emulators:exec --config firebase.emulator.test.json --project demo-mama-meals-storage-rules --only firestore,storage \"node --test --test-concurrency=1 tests/storage-rules.test.js tests/application-workflow.test.js tests/private-upload.test.js tests/review-retention.test.js tests/maintenance-tooling.test.js tests/maintenance-http.test.js tests/retention-safeguards.test.js tests/appeal-recovery.test.js tests/record-retention.test.js tests/marketplace-order.test.js tests/marketplace-client.test.js\""
   },
   "dependencies": {
     "firebase": "^12.19.0"

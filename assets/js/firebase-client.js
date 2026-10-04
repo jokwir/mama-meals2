@@ -156,9 +156,14 @@ async function loadMarketplace() {
     for (const item of menuItems) {
         const ownerId = item.vendorOwnerId;
         const vendor = vendors.get(ownerId);
-        if (!vendor || !item.imageUrl || !item.name || !Number.isFinite(Number(item.price)) || Number(item.price) <= 0) continue;
+        if (!vendor || vendor.ownerId !== ownerId || !item.imageUrl || !item.name
+            || !Number.isFinite(Number(item.price)) || Number(item.price) <= 0) continue;
         if (!grouped.has(ownerId)) {
-            grouped.set(ownerId, { ...vendor, items: [] });
+            grouped.set(ownerId, {
+                ...vendor,
+                kitchenName: vendor.kitchenName || vendor.businessName || vendor.name || "Local Kitchen",
+                items: []
+            });
         }
         grouped.get(ownerId).items.push(item);
     }

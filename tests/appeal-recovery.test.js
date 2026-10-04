@@ -30,7 +30,9 @@ function authStore() {
 
 async function appealed(type = "cook") {
   const user = { uid: `owner${randomUUID().replace(/-/g, "")}`, token: { email_verified: true } };
-  const draft = await workflow.startDraft(db, { getFiles: async () => [[]] }, user, type, {});
+  const draft = await workflow.startDraft(db, { getFiles: async () => [[]] }, user, type,
+    type === "cook" ? { businessName: "Test Appeal Kitchen", serviceArea: "Lavington",
+      fullName: "Private applicant name", experience: "Private application review notes" } : {});
   const applicationId = draft.applicationId;
   const field = type === "cook" ? "identityDocument" : "identityPhoto";
   await workflow.submitDraft(db, user, applicationId, async () => [{
@@ -72,6 +74,10 @@ for (const boundary of ["afterReservation", "afterFirestoreCommit", "afterClaimS
     assert.equal(final.appeal.status, "closed");
     assert.equal(item.auth.claims.get(item.user.uid).vendor, true);
     assert.equal((await db.doc(`vendors/${item.user.uid}`).get()).data().status, "approved");
+    const vendor = (await db.doc(`vendors/${item.user.uid}`).get()).data();
+    assert.equal(vendor.kitchenName, "Test Appeal Kitchen");
+    assert.equal(vendor.serviceArea, "Lavington");
+    assert.equal(JSON.stringify(vendor).includes("Private"), false);
     assert.equal((await db.doc(`applications/${item.applicationId}/events/initial-decision`).get()).data().decision, "declined");
     assert.equal((await db.doc(`applications/${item.applicationId}/events/reversal-approved`).get()).data().decision, "approved");
     assert.equal((await db.doc(`claimAuditEvents/${item.applicationId}-vendor-reversal-applied`).get()).data().result, "applied");

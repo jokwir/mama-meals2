@@ -196,3 +196,33 @@ test("concurrent vendors cannot claim the same public menu item", async () => {
   const loser = requests.find((request) => request.auth.uid !== saved.vendorOwnerId);
   await assert.rejects(callables.upsertVendorMenuItem.run(loser), /do not own this menu item/);
 });
+
+test("menu publishing validates image bytes and supports existing untagged menu photos", async () => {
+  process.env.FIREBASE_CONFIG = JSON.stringify({ projectId, storageBucket: bucket.name });
+  const callables = require("../functions/index.js");
+  const uid = caller().uid;
+  const itemId = `Menu${randomUUID().replace(/-/g, "").slice(0, 20)}`;
+  await db.doc(`vendors/${uid}`).set({ userId: uid, ownerId: uid, status: "approved" });
+  const imagePath = `vendors/${uid}/menu/${itemId}/photo.jpg`;
+  const request = {
+    auth: { uid, token: { vendor: true, email_verified: true } },
+    data: { item: { id: itemId, name: "Test dish", description: "Synthetic food photo for testing",
+      price: 200, category: "Main Meals", imagePath,
+      imageUrl: `https://firebasestorage.googleapis.com/v0/b/${bucket.name}/o/${encodeURIComponent(imagePath)}?alt=media` } }
+  };
+  // A client-provided food marker is not evidence of image content or even valid image bytes.
+  await bucket.file(imagePath).save(Buffer.from("not an image"), {
+    metadata: { contentType: "image/jpeg", metadata: { ownerId: uid, menuItemId: itemId, assetType: "food" } }
+  });
+  await assert.rejects(callables.upsertVendorMenuItem.run(request), /not a readable/);
+  assert.equal((await db.doc(`menuItems/${itemId}`).get()).exists, false);
+  await bucket.file(imagePath).save(jpeg, {
+    metadata: { contentType: "image/jpeg", metadata: { ownerId: uid, menuItemId: itemId } }
+  });
+  await callables.upsertVendorMenuItem.run(request);
+  request.data.item.price = 250;
+  await callables.upsertVendorMenuItem.run(request);
+  const saved = (await db.doc(`menuItems/${itemId}`).get()).data();
+  assert.equal(saved.price, 250);
+  assert.equal(saved.vendorOwnerId, uid);
+});

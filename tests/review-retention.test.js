@@ -23,9 +23,9 @@ function fakeAuth() {
   };
 }
 
-async function submitted(type) {
+async function submitted(type, fields = {}) {
   const user = { uid: uid() };
-  const draft = await workflow.startDraft(db, { getFiles: async () => [[]] }, user, type, {});
+  const draft = await workflow.startDraft(db, { getFiles: async () => [[]] }, user, type, fields);
   await workflow.submitDraft(db, user, draft.applicationId, async () => [], "REF-TEST");
   return { user, applicationId: draft.applicationId };
 }
@@ -40,7 +40,10 @@ after(async () => { await deleteApp(app); });
 
 for (const boundary of ["afterReservation", "afterFirestoreCommit", "afterClaimSync"]) {
   test(`approval resumes safely after a crash at ${boundary}`, async () => {
-    const { user, applicationId } = await submitted("cook");
+    const { user, applicationId } = await submitted("cook", {
+      businessName: "Test Kilimani Kitchen", serviceArea: "Kilimani",
+      fullName: "Private applicant name", experience: "Private application review notes"
+    });
     const auth = fakeAuth();
     await review.reserveReview(db, admin(), applicationId, "approved");
     await assert.rejects(review.finishReview(db, auth, applicationId, {}, async (at) => {
@@ -54,8 +57,17 @@ for (const boundary of ["afterReservation", "afterFirestoreCommit", "afterClaimS
     assert.equal(recovered.status, "approved");
     assert.equal(auth.claims.get(user.uid).vendor, true);
     assert.equal((await db.doc(`vendors/${user.uid}`).get()).data().status, "approved");
+    const vendorRef = db.doc(`vendors/${user.uid}`);
+    const vendor = (await vendorRef.get()).data();
+    assert.equal(vendor.kitchenName, "Test Kilimani Kitchen");
+    assert.equal(vendor.serviceArea, "Kilimani");
+    assert.equal(JSON.stringify(vendor).includes("Private"), false);
+    assert.equal(vendor.acceptingOrders, false);
+    await vendorRef.update({ kitchenName: "Updated Kitchen", acceptingOrders: true });
     assert.equal((await db.doc(`applications/${applicationId}`).get()).data().reviewNeedsReconcile, false);
     assert.deepEqual(await review.finishReview(db, auth, applicationId), recovered);
+    assert.equal((await vendorRef.get()).data().kitchenName, "Updated Kitchen");
+    assert.equal((await vendorRef.get()).data().acceptingOrders, true);
     await review.reserveReview(db, admin(), applicationId, "approved");
     await assert.rejects(review.reserveReview(db, admin(), applicationId, "declined"), /different decision/);
   });

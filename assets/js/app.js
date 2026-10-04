@@ -2556,7 +2556,7 @@ async function validateDashboardImage(input, uploadType, confirmInput, messageEl
         }
 
         if (messageElement) {
-            messageElement.textContent = "Image looks good.";
+            messageElement.textContent = "Image passed the file type, size and dimension checks.";
             messageElement.hidden = false;
             messageElement.classList.remove("error");
         }
@@ -2647,9 +2647,8 @@ function initCustomerDashboardPhase() {
 }
 
 function initVendorDashboardPhase() {
-    if (!window.location.pathname.endsWith("vendor-dashboard.html")) {
-        return;
-    }
+    const target = document.querySelector("main[data-vendor-dashboard]");
+    if (!target) return;
 
     if (!profileCanAccess("vendor")) {
         renderAccessDenied("vendor");
@@ -2660,13 +2659,12 @@ function initVendorDashboardPhase() {
     const application = getPartnerApplications()[account.userId]?.cook || {};
     const applicationFields = application.fields || {};
     const vendorProfile = getStoredVendorProfile();
-    const target = document.querySelector("main") || document.body;
     target.innerHTML = `
         <section class="dashboard-shell vendor-dashboard">
             <article class="account-card dashboard-hero-panel">
                 <div>
                     <span class="location-kicker">Vendor Workspace</span>
-                    <h2>${escapeHtml(vendorProfile.kitchenName || applicationFields.businessName || "My Vendor Dashboard")}</h2>
+                    <h2 id="vendor-kitchen-heading">${escapeHtml(vendorProfile.kitchenName || applicationFields.businessName || "My Vendor Dashboard")}</h2>
                     <p class="support-copy">Manage the menu customers will see, your order availability, and kitchen details.</p>
                 </div>
                 <span class="status-badge ${vendorProfile.acceptingOrders === true ? "status-delivered" : "status-cancelled"}" id="vendor-open-status">${vendorProfile.acceptingOrders === true ? "Accepting orders" : "Not accepting orders"}</span>
@@ -2707,7 +2705,7 @@ function initVendorDashboardPhase() {
                 <form class="dashboard-form" id="vendor-profile-form">
                     <label class="field-label">Kitchen name<input class="text-field" name="kitchenName" required value="${escapeHtml(vendorProfile.kitchenName || applicationFields.businessName || "Mama Meals Partner Kitchen")}"></label>
                     <label class="field-label">Service area<input class="text-field" name="serviceArea" required value="${escapeHtml(vendorProfile.serviceArea || applicationFields.serviceArea || getSelectedLocation())}"></label>
-                    <label class="field-label">About your kitchen<textarea class="text-field compact-textarea" name="about" required>${escapeHtml(vendorProfile.about || applicationFields.experience || "Fresh local meals prepared with care.")}</textarea></label>
+                    <label class="field-label">About your kitchen<textarea class="text-field compact-textarea" name="about" required>${escapeHtml(vendorProfile.about || "Fresh local meals prepared with care.")}</textarea></label>
                     <label class="settings-row"><span>Accepting orders</span><input type="checkbox" name="acceptingOrders" ${vendorProfile.acceptingOrders === true ? "checked" : ""}></label>
                     <button class="secondary-link" type="submit">Save Kitchen Profile</button>
                     <p class="auth-message" data-vendor-profile-message hidden></p>
@@ -2783,7 +2781,9 @@ function initVendorDashboardPhase() {
         const confirm = document.querySelector("#vendor-food-upload-confirm");
         const uploadMessage = document.querySelector("#vendor-food-upload-message");
         const preview = document.querySelector("#vendor-food-upload-preview");
-        const image = upload.files?.length ? await validateDashboardImage(upload, "food", confirm, uploadMessage, preview) : null;
+        const selectedFile = upload.files?.[0] || null;
+        const image = selectedFile ? await validateDashboardImage(upload, "food", confirm, uploadMessage, preview) : null;
+        if (selectedFile && !image) return;
         if (!image && !existingItem?.imagePath) {
             if (uploadMessage) {
                 uploadMessage.textContent = "Add a clear menu photo before saving this item.";
@@ -2805,7 +2805,7 @@ function initVendorDashboardPhase() {
             updatedAt: new Date().toISOString()
         };
         try {
-            await getFirebaseBackend().saveMenuItem(item, upload.files?.[0] || null);
+            await getFirebaseBackend().saveMenuItem(item, selectedFile);
         } catch (error) {
             if (message) {
                 message.textContent = error.message || "The menu item could not be saved.";
@@ -2881,6 +2881,8 @@ function initVendorDashboardPhase() {
         const profileMessage = profileForm.querySelector("[data-vendor-profile-message]");
         try {
             await getFirebaseBackend().saveVendorProfile(nextProfile);
+            const heading = document.querySelector("#vendor-kitchen-heading");
+            if (heading) heading.textContent = nextProfile.kitchenName;
             const status = document.querySelector("#vendor-open-status");
             if (status) {
                 status.textContent = nextProfile.acceptingOrders ? "Accepting orders" : "Not accepting orders";

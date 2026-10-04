@@ -157,7 +157,12 @@ async function finishReview(db, auth, applicationId, retentionDays = {}, fault =
         }, { merge: true });
         transaction.set(db.doc(`${role === "vendor" ? "vendors" : "riders"}/${data.userId}`), {
           userId: data.userId, ownerId: data.userId, applicationId, status: "approved",
-          ...(role === "vendor" ? { acceptingOrders: false } : { available: false }),
+          ...(role === "vendor" ? {
+            kitchenName: data.fields?.businessName || "Mama Meals Partner Kitchen",
+            serviceArea: data.fields?.serviceArea || "Nairobi",
+            about: "Fresh local meals prepared with care.",
+            acceptingOrders: false
+          } : { available: false }),
           approvedAt: FieldValue.serverTimestamp(), approvedBy: data.reviewedBy,
           updatedAt: FieldValue.serverTimestamp()
         }, { merge: true });
@@ -333,7 +338,12 @@ async function finishAppealReversal(db, auth, applicationId, retentionDays, faul
       }, { merge: true });
       transaction.set(db.doc(`${role === "vendor" ? "vendors" : "riders"}/${application.userId}`), {
         userId: application.userId, ownerId: application.userId, applicationId, status: "approved",
-        ...(role === "vendor" ? { acceptingOrders: false } : { available: false }),
+        ...(role === "vendor" ? {
+          kitchenName: application.fields?.businessName || "Mama Meals Partner Kitchen",
+          serviceArea: application.fields?.serviceArea || "Nairobi",
+          about: "Fresh local meals prepared with care.",
+          acceptingOrders: false
+        } : { available: false }),
         approvedAt: FieldValue.serverTimestamp(), approvedBy: application.appealReversal.confirmedBy,
         updatedAt: FieldValue.serverTimestamp()
       }, { merge: true });

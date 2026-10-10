@@ -128,6 +128,7 @@ function buildAssets() {
       fs.copyFileSync(source, path.join(dist, optionalFile));
     }
   }
+  fs.copyFileSync(path.join(root, "netlify.prebuilt.toml"), path.join(dist, "netlify.toml"));
 }
 
 function main() {

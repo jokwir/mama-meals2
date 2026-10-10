@@ -1,0 +1,6 @@
+# Included as netlify.toml beside index.html in the prepared upload.
+# Explicitly override stale build commands and publish paths in Netlify.
+[build]
+  base = "."
+  command = "echo 'Using prepared Mama Meals HTML'"
+  publish = "."

@@ -35,7 +35,7 @@ try {
     fs.copyFileSync(path.join(root, name), path.join(scratch, name));
   }
   for (const name of ["assets/css/style.css", "assets/js/app.js", "assets/js/firebase-client.js",
-    "scripts/build-production.js", "functions/runtime-config.js", "config.json", "_headers", "_redirects"]) {
+    "scripts/build-production.js", "functions/runtime-config.js", "config.json", "_headers", "_redirects", "netlify.prebuilt.toml"]) {
     const source = path.join(root, name);
     if (!fs.existsSync(source)) continue;
     const target = path.join(scratch, name);

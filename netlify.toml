@@ -1,4 +1,6 @@
 [build]
+  # Source checkout: compile the HTML assets into dist (never run Hugo).
+  base = "."
   command = "npm run build"
   publish = "dist"
 

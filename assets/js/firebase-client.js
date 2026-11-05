@@ -172,6 +172,21 @@ async function loadMarketplace() {
     return state.marketplaceVendors;
 }
 
+async function loadOrderKitchenName(orderId) {
+    requireUser();
+    const order = state.orders.find((entry) => entry.id === orderId);
+    const ownerId = order?.vendorOwnerId;
+    if (typeof ownerId !== "string" || !ownerId || ownerId.length > 128 || ownerId.includes("/")) return null;
+    const snapshot = await getDoc(doc(db, "vendors", ownerId));
+    if (!snapshot.exists()) return null;
+    const vendor = snapshot.data();
+    if (vendor.ownerId !== ownerId || vendor.status !== "approved") return null;
+    for (const value of [vendor.kitchenName, vendor.businessName, vendor.name]) {
+        if (typeof value === "string" && value.trim()) return value.trim();
+    }
+    return null;
+}
+
 async function refreshSessionData(forceToken = false) {
     const user = auth.currentUser;
     state.user = user;
@@ -522,6 +537,7 @@ const service = {
     ready: bootstrap(),
     refresh: refreshSessionData,
     loadMarketplace,
+    loadOrderKitchenName,
     register,
     login,
     logout,

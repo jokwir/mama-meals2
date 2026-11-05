@@ -2408,7 +2408,8 @@ main {
     padding: 16px 16px 110px;
 }
 
-main[data-vendor-dashboard] > .dashboard-shell {
+main[data-vendor-dashboard] > .dashboard-shell,
+main[data-rider-dashboard] > .dashboard-shell {
     grid-column: 1 / -1;
     min-width: 0;
     padding-left: 0;
@@ -2417,11 +2418,15 @@ main[data-vendor-dashboard] > .dashboard-shell {
 
 main[data-vendor-dashboard] .dashboard-shell > *,
 main[data-vendor-dashboard] .dashboard-form > *,
-main[data-vendor-dashboard] .dashboard-hero-panel > div {
+main[data-vendor-dashboard] .dashboard-hero-panel > div,
+main[data-rider-dashboard] .dashboard-shell > *,
+main[data-rider-dashboard] .dashboard-form > *,
+main[data-rider-dashboard] .dashboard-hero-panel > div {
     min-width: 0;
 }
 
-main[data-vendor-dashboard] .dashboard-hero-panel h2 {
+main[data-vendor-dashboard] .dashboard-hero-panel h2,
+main[data-rider-dashboard] .dashboard-hero-panel h2 {
     overflow-wrap: anywhere;
 }
 
@@ -2551,6 +2556,17 @@ main[data-vendor-dashboard] .dashboard-hero-panel h2 {
 
 .dashboard-list-item:not(:has(img)) {
     grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.vendor-order-details {
+    grid-column: 1 / -1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.vendor-order-details summary {
+    cursor: pointer;
+    font-weight: 700;
 }
 
 .dashboard-list-item img {
@@ -3240,6 +3256,29 @@ main[data-vendor-dashboard] .dashboard-hero-panel h2 {
 .vendor-dashboard .dashboard-list-item strong,
 .vendor-dashboard .dashboard-list-item span {
     overflow-wrap: anywhere;
+}
+
+.rider-dashboard .dashboard-list-item,
+.rider-dashboard .dashboard-list-item > div {
+    min-width: 0;
+}
+
+.rider-dashboard .dashboard-list-item strong,
+.rider-dashboard .dashboard-list-item span,
+.rider-dashboard .verification-summary {
+    overflow-wrap: anywhere;
+}
+
+.rider-dashboard .rider-delivery-item:not(:has(img)) {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.rider-dashboard .rider-delivery-item .dashboard-item-actions {
+    justify-content: flex-start;
+}
+
+.rider-dashboard .account-card-heading {
+    flex-wrap: wrap;
 }
 
 .dashboard-list-item > .status-badge {

@@ -512,18 +512,21 @@ function findOrderForTracking() {
     return orders.find((order) => order.id === orderId) || orders[0];
 }
 
-function getVendorNameForOrder(order) {
-    const firstItem = order?.items?.[0];
-    if (!firstItem) {
-        return "Mama Meals Kitchen";
+async function updateTrackingKitchenName(order) {
+    const target = document.querySelector("#tracking-vendor-name");
+    if (!target) return;
+    const userId = getActiveProfile()?.userId;
+    target.dataset.orderId = order.id;
+    target.textContent = "Loading kitchen...";
+    let name = null;
+    try {
+        name = await getFirebaseBackend()?.loadOrderKitchenName(order.id);
+    } catch {
+        // A missing or inaccessible public profile must not hide the order itself.
     }
-
-    const vendor = Object.values(vendorShops).find((shop) => (
-        firstItem.image === shop.image ||
-        Object.values(shop.categories).flat().some((item) => item.name === firstItem.name)
-    ));
-
-    return vendor?.name || "Mama Meals Kitchen";
+    if (target.isConnected && target.dataset.orderId === order.id && getActiveProfile()?.userId === userId) {
+        target.textContent = name || "Kitchen unavailable";
+    }
 }
 
 function getCartTotals(items = getCart()) {
@@ -1692,7 +1695,7 @@ function initOrderTrackingPage() {
         : "Order time pending";
     document.querySelector("#tracking-status").textContent = order.status || "Confirmed";
     document.querySelector("#tracking-eta").textContent = etaByStep[activeStep];
-    document.querySelector("#tracking-vendor-name").textContent = getVendorNameForOrder(order);
+    void updateTrackingKitchenName(order);
     document.querySelector("#tracking-total").textContent = formatShillings(order.total || 0);
     document.querySelector("#tracking-address").textContent = order.deliveryAddress || "Pending";
 
@@ -2646,6 +2649,28 @@ function initCustomerDashboardPhase() {
     });
 }
 
+function renderVendorOrderCard(order, vendorUid) {
+    if (!vendorUid || order.vendorOwnerId !== vendorUid) return "";
+    const items = Array.isArray(order.items) ? order.items : [];
+    return `
+        <article class="dashboard-list-item">
+            <div><strong>${escapeHtml(order.id)}</strong><span>${items.length} items - ${formatShillings(order.total)} - ${escapeHtml(order.status)}</span></div>
+            ${String(order.status).includes("Order Received")
+                ? `<button class="small-action-button" type="button" data-vendor-order-action="preparing" data-order-id="${escapeHtml(order.id)}">Start Preparing</button>`
+                : ""}
+            <details class="vendor-order-details">
+                <summary>View order details</summary>
+                <ul>${items.map((item) => `<li>${escapeHtml(item.name)} x ${Number(item.quantity || 1)} - ${formatShillings(Number(item.price) * Number(item.quantity || 1))}</li>`).join("")}</ul>
+                <p>Subtotal: ${formatShillings(order.subtotal || 0)}</p>
+                <p>Delivery fee: ${formatShillings(order.deliveryFee || 0)}</p>
+                <p>Total: ${formatShillings(order.total)}</p>
+                <p>Payment method: ${escapeHtml(order.paymentMethod || "Not recorded")}</p>
+                <p>Kitchen notes: ${escapeHtml(order.notes || "None")}</p>
+            </details>
+        </article>
+    `;
+}
+
 function initVendorDashboardPhase() {
     const target = document.querySelector("main[data-vendor-dashboard]");
     if (!target) return;
@@ -2743,14 +2768,7 @@ function initVendorDashboardPhase() {
 
     function renderOrders() {
         const orderList = getOrders().filter((order) => order.vendorOwnerId === account.userId).slice(0, 8);
-        orders.innerHTML = orderList.length ? orderList.map((order) => `
-            <article class="dashboard-list-item">
-                <div><strong>${escapeHtml(order.id)}</strong><span>${order.items.length} items - ${formatShillings(order.total)} - ${escapeHtml(order.status)}</span></div>
-                ${String(order.status).includes("Order Received")
-                    ? `<button class="small-action-button" type="button" data-vendor-order-action="preparing" data-order-id="${escapeHtml(order.id)}">Start Preparing</button>`
-                    : `<a class="text-action" href="order-tracking.html?order=${encodeURIComponent(order.id)}">View</a>`}
-            </article>
-        `).join("") : `<p class="empty-state visible">No orders are assigned to this kitchen yet. Orders from your published menu will appear here.</p>`;
+        orders.innerHTML = orderList.length ? orderList.map((order) => renderVendorOrderCard(order, account.userId)).join("") : `<p class="empty-state visible">No orders are assigned to this kitchen yet. Orders from your published menu will appear here.</p>`;
 
         const delivered = orderList.filter((order) => String(order.status).includes("Delivered"));
         const gross = delivered.reduce((total, order) => total + Number(order.subtotal || order.total || 0), 0);
@@ -2917,7 +2935,7 @@ function initVendorDashboardPhase() {
 }
 
 function initRiderDashboardPhase() {
-    if (!window.location.pathname.endsWith("rider-dashboard.html")) {
+    if (!document.querySelector("main[data-rider-dashboard]")) {
         return;
     }
 

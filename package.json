@@ -6,6 +6,9 @@
   "scripts": {
     "build": "node scripts/build-production.js",
     "check": "node --check assets/js/app.js && node --check scripts/maintenance-core.js && node --check scripts/maintenance-cli.js && node scripts/check-firebase-client.js && node scripts/check-links.js && node scripts/check-security.js && node scripts/preflight-local.js && npm --prefix functions run check",
+    "test:vendor-order-view": "node --test tests/vendor-order-view.test.js",
+    "test:rider-layout": "node --test tests/rider-layout.test.js",
+    "test:order-kitchen-name": "node --test tests/order-kitchen-name.test.js",
     "preflight:production": "node scripts/preflight-local.js --production-config",
     "build:isolated-check": "node scripts/isolated-build-check.js",
     "test:storage-rules": "firebase emulators:exec --config firebase.emulator.test.json --project demo-mama-meals-storage-rules --only firestore,storage \"node --test tests/storage-rules.test.js\"",

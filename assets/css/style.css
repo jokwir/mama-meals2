@@ -1644,6 +1644,10 @@ main {
     padding: 12px;
 }
 
+.payment-options:not(:has(input[value="M-Pesa"]:checked)) + .daraja-placeholder {
+    display: none;
+}
+
 .daraja-placeholder p {
     margin: 5px 0 0;
     color: var(--muted);
